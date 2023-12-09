@@ -12,3 +12,5 @@ void shtc3_soft_reset();
 void shtc3_refresh();
 
 float shtc3_get_temperature();
+
+float shtc3_get_humidity();

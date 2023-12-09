@@ -4,6 +4,8 @@
 #include <esp_log.h>
 #include <driver/i2c.h>
 
+#define SHTC3_DEBUG_LOG                              (0)
+
 #define SHTC3_SDA_PIN                                 10
 #define SHTC3_SCL_PIN                                  8
 #define SHTC3_I2C_FREQ                 ((uint32_t)100000)
@@ -22,8 +24,15 @@
 static const char* TAG = "SHTC3";
 
 static float temperature = 0.0f;
+static float humidity = 0.0f;
 
 esp_err_t shtc3_init() {
+#ifdef SHTC3_DEBUG_LOG
+    esp_log_level_set(TAG, ESP_LOG_DEBUG);
+#else
+    esp_log_level_set(TAG, ESP_LOG_NONE);
+#endif
+
     i2c_config_t conf = {
         .mode = I2C_MODE_MASTER,
         .sda_io_num = SHTC3_SDA_PIN,
@@ -97,7 +106,7 @@ uint16_t shtc3_read_id() {
 void shtc3_refresh() {
     uint8_t data[6];
 
-    // ESP_LOGI(TAG, "Write attempt...");
+    ESP_LOGI(TAG, "Write attempt...");
     {
         i2c_cmd_handle_t cmd = i2c_cmd_link_create();
         i2c_master_start(cmd);
@@ -153,7 +162,10 @@ void shtc3_refresh() {
     }
     vTaskDelay(pdMS_TO_TICKS(20));
 
-    // ESP_LOGI(TAG, "Read done! Raw: %02X %02X %02X %02X %02X %02X.", data[0], data[1], data[2], data[3], data[4], data[5]);
+    ESP_LOGI(TAG, "Read done! Raw: %02X %02X %02X %02X %02X %02X.", data[0], data[1], data[2], data[3], data[4], data[5]);
+
+    int16_t raw_humidity = (data[3] << 8) | data[4];
+    humidity = 100.0f * ((float)raw_humidity / 65535.0f);
 
     int16_t raw_temperature = (data[0] << 8) | data[1];
     temperature = -45.0f + 175.0f * ((float)raw_temperature / 65535.0f);
@@ -161,4 +173,8 @@ void shtc3_refresh() {
 
 float shtc3_get_temperature() {
     return temperature;
+}
+
+float shtc3_get_humidity() {
+    return humidity;
 }

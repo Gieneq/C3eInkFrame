@@ -45,14 +45,15 @@ void app_main(void) {
         shtc3_refresh();
 
         const float temperature = shtc3_get_temperature();
+        const float humidity = shtc3_get_humidity();
         const float value = mapFloat(temperature, 10.0f, 40.0f, 0, 30);
         const uint8_t red = (uint8_t)((uint32_t)value);
         const uint8_t blue = 20 - red;
 
         gindicator_set_rgb(red, 0, blue);
 
-        // ESP_LOGI(TAG, "Temperature is %.2f*C", temperature);
+        ESP_LOGI(TAG, "Temperature is %.2f*C, humidity is: %.2f%%", temperature, humidity);
 
-        vTaskDelay(pdMS_TO_TICKS(20));
+        vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
