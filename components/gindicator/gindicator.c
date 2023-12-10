@@ -88,7 +88,7 @@ void gindicator_init() {
 
     ESP_LOGI(TAG, "GIndicator done!");
 
-    gindicator_set_hsv(60, 255, 255);
+    gindicator_set_rgb(0, 2, 0);
 }
 
 

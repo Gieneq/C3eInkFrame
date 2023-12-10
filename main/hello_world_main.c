@@ -14,22 +14,18 @@
 
 #include "shtc3_sensor.h"
 #include "gindicator.h"
+#include "gcaptive.h"
+
+#include <esp_wifi.h>
+#include <esp_system.h>
+#include <nvs_flash.h>
+
 
 static const char* TAG = "Main";
 
-float mapFloat(float value, float inMin, float inMax, float outMin, float outMax) {
-    // Check for division by zero to avoid potential issues
-    if (inMax - inMin == 0) {
-        ESP_LOGW(TAG, "Error: Division by zero in mapFloat function.");
-        return 0.0f;
-    }
+/* Setup */
 
-    // Perform the linear interpolation
-    return (value - inMin) * (outMax - outMin) / (inMax - inMin) + outMin;
-}
-
-void app_main(void) {
-
+static void setup_sensors() {
     esp_err_t ret = shtc3_init();
     ESP_ERROR_CHECK(ret);
 
@@ -39,21 +35,43 @@ void app_main(void) {
 
     ESP_LOGI(TAG, "Got ID: 0x%04X", sesns_id);
 
+}
+
+static void setup_indicators() {
     gindicator_init();
+    gindicator_set_rgb(0, 0, 0);
+}
+
+static void setup_gemeral() {
+        // ESP_ERROR_CHECK(nvs_flash_init());
+        // ESP_ERROR_CHECK(esp_netif_init());
+        // ESP_ERROR_CHECK(esp_event_loop_create_default());
+}
+
+static void setup_connectivity() {
+    gcaptive_create();
+    gcaptive_start();
+}
+
+/* Refresh */
+
+static void refresh_sensors() {
+    shtc3_refresh();
+
+    const float temperature = shtc3_get_temperature();
+    const float humidity = shtc3_get_humidity();
+
+    ESP_LOGI(TAG, "Temperature is %.2f*C, humidity is: %.2f%%", temperature, humidity);
+}
+
+void app_main(void) {
+    setup_gemeral();
+    setup_indicators();
+    setup_sensors();
+    setup_connectivity();
 
     while(1) {
-        shtc3_refresh();
-
-        const float temperature = shtc3_get_temperature();
-        const float humidity = shtc3_get_humidity();
-        const float value = mapFloat(temperature, 10.0f, 40.0f, 0, 30);
-        const uint8_t red = (uint8_t)((uint32_t)value);
-        const uint8_t blue = 20 - red;
-
-        gindicator_set_rgb(red, 0, blue);
-
-        ESP_LOGI(TAG, "Temperature is %.2f*C, humidity is: %.2f%%", temperature, humidity);
-
+        // refresh_sensors();
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }

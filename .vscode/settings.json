@@ -25,6 +25,13 @@
         "string": "c",
         "string_view": "c",
         "gindicator.h": "c",
-        "compare": "c"
+        "compare": "c",
+        "gcaptive.h": "c",
+        "esp_wifi.h": "c",
+        "param.h": "c",
+        "esp_http_server.h": "c",
+        "esp_event.h": "c",
+        "esp_netif.h": "c",
+        "inet.h": "c"
     }
 }
