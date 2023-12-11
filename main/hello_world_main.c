@@ -20,7 +20,9 @@
 #include "shtc3_sensor.h"
 #include "gindicator.h"
 #include "gcaptive.h"
-#include "epb7_5inch_v2.h"
+// #include "epb7_5inch_v2.h"
+#include "EPD_1in54b.h"
+#include "DEV_Config.h"
 
 #define TOUCH_SENS_PIN GPIO_NUM_9
 
@@ -37,8 +39,11 @@ void IRAM_ATTR gpio_isr_handler(void* arg) {
 /* Setup */
 
 static void setup_epb() {
-    ESP_ERROR_CHECK(epb7_5inch_v2_create());
-    ESP_ERROR_CHECK(epb7_5inch_v2_start());
+    // ESP_ERROR_CHECK(epb7_5inch_v2_create());
+    // ESP_ERROR_CHECK(epb7_5inch_v2_start());
+    DEV_Module_Setup();
+    EPD_1IN54B_Init();
+    EPD_1IN54B_Clear();
 }
 
 static void setup_ts() {

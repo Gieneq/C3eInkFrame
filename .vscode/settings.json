@@ -38,6 +38,7 @@
         "debug.h": "c",
         "epd_7in5_v2.h": "c",
         "gpio.h": "c",
-        "dev_config.h": "c"
+        "dev_config.h": "c",
+        "epd_1in54b.h": "c"
     }
 }

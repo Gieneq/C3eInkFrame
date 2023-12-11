@@ -51,6 +51,7 @@ int DEV_Module_Setup(void) {
 
     gpio_reset_pin(EPD_BUSY_PIN);
     gpio_set_direction(EPD_BUSY_PIN, GPIO_MODE_INPUT);
+    gpio_set_pull_mode(EPD_BUSY_PIN, GPIO_PULLUP_ONLY);
     
     /* SPI */
     esp_err_t ret;
