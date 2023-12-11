@@ -32,6 +32,12 @@
         "esp_http_server.h": "c",
         "esp_event.h": "c",
         "esp_netif.h": "c",
-        "inet.h": "c"
+        "inet.h": "c",
+        "epb7_5inch_v2.h": "c",
+        "stdio.h": "c",
+        "debug.h": "c",
+        "epd_7in5_v2.h": "c",
+        "gpio.h": "c",
+        "dev_config.h": "c"
     }
 }

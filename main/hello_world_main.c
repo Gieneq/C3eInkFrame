@@ -12,18 +12,48 @@
 #include <esp_err.h>
 #include <esp_log.h>
 
-#include "shtc3_sensor.h"
-#include "gindicator.h"
-#include "gcaptive.h"
-
 #include <esp_wifi.h>
 #include <esp_system.h>
 #include <nvs_flash.h>
+#include <driver/gpio.h>
 
+#include "shtc3_sensor.h"
+#include "gindicator.h"
+#include "gcaptive.h"
+#include "epb7_5inch_v2.h"
+
+#define TOUCH_SENS_PIN GPIO_NUM_9
 
 static const char* TAG = "Main";
 
+static volatile int ts_counter = 0;
+
+void IRAM_ATTR gpio_isr_handler(void* arg) {
+    // This function will be called on the rising edge interrupt
+    ++ts_counter;
+}
+
+
 /* Setup */
+
+static void setup_epb() {
+    ESP_ERROR_CHECK(epb7_5inch_v2_create());
+    ESP_ERROR_CHECK(epb7_5inch_v2_start());
+}
+
+static void setup_ts() {
+    gpio_config_t gpio_ts_config = {
+        .pin_bit_mask = 1 << TOUCH_SENS_PIN,
+        .mode = GPIO_MODE_INPUT,
+        .pull_up_en = GPIO_PULLUP_ENABLE,
+        .pull_down_en = GPIO_PULLUP_DISABLE,
+        .intr_type = GPIO_INTR_POSEDGE
+    };
+
+    gpio_config(&gpio_ts_config);
+    gpio_install_isr_service(0);
+    gpio_isr_handler_add(TOUCH_SENS_PIN, gpio_isr_handler, (void*) TOUCH_SENS_PIN);
+}
 
 static void setup_sensors() {
     esp_err_t ret = shtc3_init();
@@ -66,12 +96,20 @@ static void refresh_sensors() {
 
 void app_main(void) {
     setup_gemeral();
+    setup_ts();
+    setup_epb();
     setup_indicators();
     setup_sensors();
     setup_connectivity();
 
+    int last_ts_counter = ts_counter;
+
     while(1) {
         // refresh_sensors();
+        if(last_ts_counter != ts_counter) {
+            last_ts_counter = ts_counter;
+            printf("GPIO Interrupt Triggered: %d!\n", ts_counter);
+        }
         vTaskDelay(pdMS_TO_TICKS(500));
     }
 }
