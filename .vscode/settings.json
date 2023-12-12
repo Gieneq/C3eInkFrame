@@ -39,6 +39,7 @@
         "epd_7in5_v2.h": "c",
         "gpio.h": "c",
         "dev_config.h": "c",
-        "epd_1in54b.h": "c"
+        "epd_1in54b.h": "c",
+        "spi_master.h": "c"
     }
 }

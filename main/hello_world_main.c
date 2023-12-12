@@ -21,8 +21,9 @@
 #include "gindicator.h"
 #include "gcaptive.h"
 // #include "epb7_5inch_v2.h"
-#include "EPD_1in54b.h"
-#include "DEV_Config.h"
+// #include "EPD_1in54b.h"
+// #include "DEV_Config.h"
+#include "spi_epd.h"
 
 #define TOUCH_SENS_PIN GPIO_NUM_9
 
@@ -41,9 +42,16 @@ void IRAM_ATTR gpio_isr_handler(void* arg) {
 static void setup_epb() {
     // ESP_ERROR_CHECK(epb7_5inch_v2_create());
     // ESP_ERROR_CHECK(epb7_5inch_v2_start());
-    DEV_Module_Setup();
-    EPD_1IN54B_Init();
-    EPD_1IN54B_Clear();
+    // DEV_Module_Setup();
+    // EPD_1IN54B_Init();
+    // EPD_1IN54B_Clear();
+    ESP_ERROR_CHECK(spi_epd_create());
+    vTaskDelay(pdMS_TO_TICKS(1000));
+
+    ESP_ERROR_CHECK(spi_epd_clear_white());
+    // vTaskDelay(pdMS_TO_TICKS(1000));
+    
+    // ESP_ERROR_CHECK(spi_epd_sleep());
 }
 
 static void setup_ts() {
@@ -107,10 +115,10 @@ void app_main(void) {
     setup_sensors();
     setup_connectivity();
 
+    refresh_sensors();
     int last_ts_counter = ts_counter;
 
     while(1) {
-        // refresh_sensors();
         if(last_ts_counter != ts_counter) {
             last_ts_counter = ts_counter;
             printf("GPIO Interrupt Triggered: %d!\n", ts_counter);
