@@ -45,8 +45,8 @@ typedef struct command_data_size_t {
 } command_data_size_t;
 
 static const command_data_size_t power_settings_data[] = {
-    {0x01, {0x07, 0x00, 0x08, 0x00}, 4},    /* Power settings */
-    {0x06, {0x07, 0x07, 0x07}, 3},          /* Booster settings */
+    {0x01, {0x03, 0x00, 0x08, 0x00}, 4},    /* Power settings */
+    {0x06, {0x07, 0x06, 0x04}, 3},          /* Booster settings */
     {0x04, {}, 0},                          /* Power on */
 };
 
@@ -282,13 +282,13 @@ static esp_err_t spi_epd_init() {
     esp_err_t ret = ESP_OK;
     ESP_LOGI(TAG, "Initializing...");
     
-    // spi_epd_wait_until_not_busy();
 
     /* Initial commands */
     ret = spi_epd_apply_command_data_size(power_settings_data, sizeof(power_settings_data) / sizeof(power_settings_data[0]));
     if(ret != ESP_OK) {
         return ret;
     }
+    spi_epd_wait_until_not_busy();
     ESP_LOGI(TAG, "HERE1!");
 
     ret = spi_epd_apply_command_data_size(panel_settings_data, sizeof(panel_settings_data) / sizeof(panel_settings_data[0]));
