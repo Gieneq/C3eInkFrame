@@ -51,11 +51,11 @@ static void setup_epb() {
     ESP_ERROR_CHECK(spi_epd_clear_white());
     vTaskDelay(pdMS_TO_TICKS(200));
     
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    // vTaskDelay(pdMS_TO_TICKS(2000));
     ESP_ERROR_CHECK(spi_epd_draw_sth());
-    vTaskDelay(pdMS_TO_TICKS(2000));
+    // vTaskDelay(pdMS_TO_TICKS(2000));
     
-    // ESP_ERROR_CHECK(spi_epd_sleep());
+    ESP_ERROR_CHECK(spi_epd_sleep());
 }
 
 static void setup_ts() {

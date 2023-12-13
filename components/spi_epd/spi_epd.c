@@ -51,14 +51,14 @@ typedef struct command_data_size_t {
 } command_data_size_t;
 
 static const command_data_size_t power_settings_data[] = {
-    {0x01, {0x03, 0x00, 0x08, 0x00}, 4},    /* Power settings */
-    {0x06, {0x07, 0x06, 0x05}, 3},          /* Booster settings */
+    {0x01, {0x07, 0x00, 0x0F, 0x0F}, 4},    /* Power settings */
+    {0x06, {0x07, 0x07, 0x07}, 3},          /* Booster settings */
     {0x04, {}, 0},                          /* Power on */
 };
 
 static const command_data_size_t panel_settings_data[] = {
     {0x00, {0xCF}, 1},  /* PANEL_SETTING */
-    {0x50, {0x17}, 1},  /* VCOM_AND_DATA_INTERVAL_SETTING from datasheet must be 0x17, 
+    {0x50, {0x37}, 1},  /* VCOM_AND_DATA_INTERVAL_SETTING from datasheet must be 0x17, 
                          * something about border */
     {0x30, {0x39}, 1},  /* PLL_CONTROL, 0x2A in datasheet */
     {0x61, {0xC8, 0x00, 0xC8}, 3},  /* TCON_RESOLUTION set x and y */
@@ -221,7 +221,7 @@ static esp_err_t spi_epd_setup_peripherals() {
 
     /* Configure the SPI device */ 
     spi_device_interface_config_t dev_config = {
-        .clock_speed_hz = 1 * 1000 * 1000,  // Clock speed
+        .clock_speed_hz = 10 * 1000 * 1000,  // Clock speed
         .mode = 0,                           // SPI mode 0
         .spics_io_num = EPD1IN54B_CS_PIN,    // CS pin
         .queue_size = 1,                     // Maximum number of transactions in the SPI hardware queue
