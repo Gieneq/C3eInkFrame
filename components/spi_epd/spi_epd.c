@@ -19,12 +19,18 @@
 #define EPD1IN54B_WIDTH       200
 #define EPD1IN54B_HEIGHT      200
 
+#define EPD1IN54B_LINES_COUNT (EPD1IN54B_HEIGHT)
+#define EPD1IN54B_BW_LINE_BYTES_COUNT (EPD1IN54B_WIDTH / (8 / 2))
+#define EPD1IN54B_R_LINE_BYTES_COUNT (EPD1IN54B_WIDTH / 8)
+static uint8_t bw_line_bytes_buffer[EPD1IN54B_BW_LINE_BYTES_COUNT];
+static uint8_t r_line_bytes_buffer[EPD1IN54B_R_LINE_BYTES_COUNT];
+
 #define EPD1IN54B_MAX_TRANSFER_SIZE  (700)
 
 static spi_device_handle_t spi_handle;
 
-#define EPD1IN54B_BUFFER_SIZE (EPD1IN54B_MAX_TRANSFER_SIZE)
-static uint8_t spi_epd_buffer[EPD1IN54B_BUFFER_SIZE];
+// #define EPD1IN54B_BUFFER_SIZE (EPD1IN54B_MAX_TRANSFER_SIZE)
+// static uint8_t spi_epd_buffer[EPD1IN54B_BUFFER_SIZE];
 
 /* LUT */
 // static const unsigned char EPD1IN54B_LUT_vcom0[] = {0x0E, 0x14, 0x01, 0x0A, 0x06, 0x04, 0x0A, 0x0A, 0x0F, 0x03, 0x03, 0x0C, 0x06, 0x0A, 0x00};
@@ -45,8 +51,8 @@ typedef struct command_data_size_t {
 } command_data_size_t;
 
 static const command_data_size_t power_settings_data[] = {
-    {0x01, {0x03, 0x00, 0x08, 0x00}, 4},    /* Power settings */
-    {0x06, {0x07, 0x06, 0x04}, 3},          /* Booster settings */
+    {0x01, {0x07, 0x00, 0x08, 0x00}, 4},    /* Power settings */
+    {0x06, {0x07, 0x07, 0x07}, 3},          /* Booster settings */
     {0x04, {}, 0},                          /* Power on */
 };
 
@@ -83,12 +89,12 @@ static const char* TAG = "SPI_EPD";
 
 static esp_err_t spi_epd_send_cmd(const uint8_t cmd) {
     esp_err_t ret = ESP_OK;
-    ret = spi_device_acquire_bus(spi_handle, portMAX_DELAY);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Send CMD: Aquiring bus failed");
-        fflush(stdout);
-        return ret;
-    }
+    // ret = spi_device_acquire_bus(spi_handle, portMAX_DELAY);
+    // if (ret != ESP_OK) {
+    //     ESP_LOGE(TAG, "Send CMD: Aquiring bus failed");
+    //     fflush(stdout);
+    //     return ret;
+    // }
 
     spi_transaction_t transaction;
     memset(&transaction, 0, sizeof(spi_transaction_t));
@@ -103,7 +109,7 @@ static esp_err_t spi_epd_send_cmd(const uint8_t cmd) {
         return ret;
     }
     
-    spi_device_release_bus(spi_handle);
+    // spi_device_release_bus(spi_handle);
 
     return ESP_OK;
 }
@@ -114,12 +120,12 @@ static esp_err_t spi_epd_send_data(const uint8_t* data, const size_t data_length
         return ESP_OK;
     }
 
-    ret = spi_device_acquire_bus(spi_handle, portMAX_DELAY);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Send Data: Aquiring bus failed");
-        fflush(stdout);
-        return ret;
-    }
+    // ret = spi_device_acquire_bus(spi_handle, portMAX_DELAY);
+    // if (ret != ESP_OK) {
+    //     ESP_LOGE(TAG, "Send Data: Aquiring bus failed");
+    //     fflush(stdout);
+    //     return ret;
+    // }
 
     spi_transaction_t transaction;
     memset(&transaction, 0, sizeof(spi_transaction_t));
@@ -137,7 +143,7 @@ static esp_err_t spi_epd_send_data(const uint8_t* data, const size_t data_length
         return ret;
     }
     
-    spi_device_release_bus(spi_handle);
+    // spi_device_release_bus(spi_handle);
 
     return ESP_OK;
 }
@@ -214,7 +220,7 @@ static esp_err_t spi_epd_setup_peripherals() {
 
     /* Configure the SPI device */ 
     spi_device_interface_config_t dev_config = {
-        .clock_speed_hz = 10 * 1000 * 1000,  // Clock speed
+        .clock_speed_hz = 1 * 1000 * 1000,  // Clock speed
         .mode = 0,                           // SPI mode 0
         .spics_io_num = EPD1IN54B_CS_PIN,    // CS pin
         .queue_size = 1,                     // Maximum number of transactions in the SPI hardware queue
@@ -264,6 +270,7 @@ static esp_err_t spi_epd_apply_command_data_size(const command_data_size_t* cds,
             fflush(stdout);
             return ret;
         }
+        vTaskDelay(1);
 
         if(cds_count > 0) {
             /* cds_count is small compared to max transer size */
@@ -273,6 +280,7 @@ static esp_err_t spi_epd_apply_command_data_size(const command_data_size_t* cds,
                 return ret;
             }
         }
+        vTaskDelay(1);
     }
 
     return ESP_OK;
@@ -340,12 +348,12 @@ esp_err_t spi_epd_sleep() {
     esp_err_t ret = ESP_OK;
     ESP_LOGI(TAG, "Going sleep...");
     
-    spi_epd_wait_until_not_busy();
-
     ret = spi_epd_apply_command_data_size(sleep_initialization_data, sizeof(sleep_initialization_data) / sizeof(sleep_initialization_data[0]));
     if(ret != ESP_OK) {
         return ret;
     }
+
+    spi_epd_wait_until_not_busy();
 
     vTaskDelay(pdMS_TO_TICKS(1000));
 
@@ -363,38 +371,65 @@ esp_err_t spi_epd_clear_white() {
 
     esp_err_t ret = ESP_OK;
 
-    /* Setup chunk size */
-    const size_t chunk_size = 2 * EPD1IN54B_WIDTH / 10;
-    if(chunk_size > EPD1IN54B_BUFFER_SIZE) {
-        return ESP_FAIL;
-    }
-    if((EPD1IN54B_HEIGHT * EPD1IN54B_WIDTH) % chunk_size != 0) {
-        return ESP_FAIL;
-    }
-    const size_t chunks_count = EPD1IN54B_HEIGHT * EPD1IN54B_WIDTH / chunk_size;
 
-
-    /* Fill chunk buffer */
-    for(size_t chunk_element_idx = 0; chunk_element_idx < chunk_size; ++chunk_element_idx) {
-        // spi_epd_buffer[chunk_element_idx] = 0x00; // 4 pixels to white
-        spi_epd_buffer[chunk_element_idx] = 0x55; // 4 pixels to black
-        // spi_epd_buffer[chunk_element_idx] = 0xFF; // ???
+    /* Fill chunk buffer with black data */
+    /* Grayscale:
+     * 0x3 = b11 -> white
+     * 0x2 = b10 -> lightgray
+     * 0x1 = b01 -> darkgray
+     * 0x0 - b00 -> black
+     * 
+     * 0xff -> 4x white
+     * 0xAA -> 4x lightgray
+     * 0x55 -> 4x darkgray
+     * 0x00 -> 4x black
+    */
+    for(size_t line_byte_idx = 0; line_byte_idx < EPD1IN54B_BW_LINE_BYTES_COUNT; ++line_byte_idx) {
+        // bw_line_bytes_buffer[line_byte_idx] = 0xFF; // full white
+        // bw_line_bytes_buffer[line_byte_idx] = 0xAA; // full lightgray
+        // bw_line_bytes_buffer[line_byte_idx] = 0x55; // full darkgray
+        // bw_line_bytes_buffer[line_byte_idx] = 0x00; // full black
+        bw_line_bytes_buffer[line_byte_idx] = 0xE4; // gradients left(white)->right(black)
+    }
+    
+    /* Fill chunk buffer with black data */
+    for(size_t line_byte_idx = 0; line_byte_idx < EPD1IN54B_R_LINE_BYTES_COUNT; ++line_byte_idx) {
+        r_line_bytes_buffer[line_byte_idx] = 0xFF; // full white
+        // r_line_bytes_buffer[line_byte_idx] = 0x00; // full red
     }
 
-    ret = spi_epd_send_cmd(0x13);
+    /* Black */
+    ret = spi_epd_send_cmd(0x10);
     if(ret != ESP_OK) {
         return ret;
     }
+    // vTaskDelay(1);
 
-    ESP_LOGI(TAG, "-->> Attempt to send: %u bytes x %u", chunk_size, chunks_count);
-    for(size_t chunk_idx = 0; chunk_idx < chunks_count; ++chunk_idx) {
-        const bool has_next_chunk = (chunk_idx < (chunks_count - 1)) ? true : false;
-        ret = spi_epd_send_data(spi_epd_buffer, chunk_size, has_next_chunk);
+    // ESP_LOGI(TAG, "-->> Attempt to send: %u black bytes x %u", chunk_size, black_chunks_count);
+    for(size_t line_idx = 0; line_idx < EPD1IN54B_LINES_COUNT; ++line_idx) {
+        const bool has_next_line = (line_idx < (EPD1IN54B_LINES_COUNT - 1)) ? true : false;
+        ret = spi_epd_send_data(bw_line_bytes_buffer, EPD1IN54B_BW_LINE_BYTES_COUNT, false);
         if(ret != ESP_OK) {
             return ret;
         }
     }
+    vTaskDelay(1);
 
+    /* Red */
+    ret = spi_epd_send_cmd(0x13);
+    if(ret != ESP_OK) {
+        return ret;
+    }
+    // vTaskDelay(1);
+
+    // ESP_LOGI(TAG, "-->> Attempt to send: %u red bytes x %u", chunk_size, red_chunks_count);
+    for(size_t line_idx = 0; line_idx < EPD1IN54B_LINES_COUNT; ++line_idx) {
+        const bool has_next_line = (line_idx < (EPD1IN54B_LINES_COUNT - 1)) ? true : false;
+        ret = spi_epd_send_data(r_line_bytes_buffer, EPD1IN54B_R_LINE_BYTES_COUNT, false);
+        if(ret != ESP_OK) {
+            return ret;
+        }
+    }
     vTaskDelay(1);
 
     ret = spi_epd_send_cmd(0x12);

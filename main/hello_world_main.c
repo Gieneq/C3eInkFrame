@@ -46,10 +46,10 @@ static void setup_epb() {
     // EPD_1IN54B_Init();
     // EPD_1IN54B_Clear();
     ESP_ERROR_CHECK(spi_epd_create());
-    vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(200));
 
     ESP_ERROR_CHECK(spi_epd_clear_white());
-    // vTaskDelay(pdMS_TO_TICKS(1000));
+    vTaskDelay(pdMS_TO_TICKS(200));
     
     // ESP_ERROR_CHECK(spi_epd_sleep());
 }
