@@ -51,15 +51,16 @@ typedef struct command_data_size_t {
 } command_data_size_t;
 
 static const command_data_size_t power_settings_data[] = {
-    {0x01, {0x07, 0x00, 0x08, 0x00}, 4},    /* Power settings */
-    {0x06, {0x07, 0x07, 0x07}, 3},          /* Booster settings */
+    {0x01, {0x03, 0x00, 0x08, 0x00}, 4},    /* Power settings */
+    {0x06, {0x07, 0x06, 0x05}, 3},          /* Booster settings */
     {0x04, {}, 0},                          /* Power on */
 };
 
 static const command_data_size_t panel_settings_data[] = {
     {0x00, {0xCF}, 1},  /* PANEL_SETTING */
-    {0x50, {0x37}, 1},  /* VCOM_AND_DATA_INTERVAL_SETTING */
-    {0x30, {0x39}, 1},  /* PLL_CONTROL */
+    {0x50, {0x17}, 1},  /* VCOM_AND_DATA_INTERVAL_SETTING from datasheet must be 0x17, 
+                         * something about border */
+    {0x30, {0x39}, 1},  /* PLL_CONTROL, 0x2A in datasheet */
     {0x61, {0xC8, 0x00, 0xC8}, 3},  /* TCON_RESOLUTION set x and y */
     {0x82, {0x0E}, 1},  /* VCM_DC_SETTING_REGISTER */
 };
@@ -368,9 +369,7 @@ esp_err_t spi_epd_sleep() {
 
 esp_err_t spi_epd_clear_white() {
     ESP_LOGI(TAG, "Clearing white...");
-
     esp_err_t ret = ESP_OK;
-
 
     /* Fill chunk buffer with black data */
     /* Grayscale:
@@ -385,11 +384,11 @@ esp_err_t spi_epd_clear_white() {
      * 0x00 -> 4x black
     */
     for(size_t line_byte_idx = 0; line_byte_idx < EPD1IN54B_BW_LINE_BYTES_COUNT; ++line_byte_idx) {
-        // bw_line_bytes_buffer[line_byte_idx] = 0xFF; // full white
+        bw_line_bytes_buffer[line_byte_idx] = 0xFF; // full white
         // bw_line_bytes_buffer[line_byte_idx] = 0xAA; // full lightgray
         // bw_line_bytes_buffer[line_byte_idx] = 0x55; // full darkgray
         // bw_line_bytes_buffer[line_byte_idx] = 0x00; // full black
-        bw_line_bytes_buffer[line_byte_idx] = 0xE4; // gradients left(white)->right(black)
+        // bw_line_bytes_buffer[line_byte_idx] = 0xE4; // gradients left(white)->right(black)
     }
     
     /* Fill chunk buffer with black data */
@@ -403,9 +402,7 @@ esp_err_t spi_epd_clear_white() {
     if(ret != ESP_OK) {
         return ret;
     }
-    // vTaskDelay(1);
 
-    // ESP_LOGI(TAG, "-->> Attempt to send: %u black bytes x %u", chunk_size, black_chunks_count);
     for(size_t line_idx = 0; line_idx < EPD1IN54B_LINES_COUNT; ++line_idx) {
         const bool has_next_line = (line_idx < (EPD1IN54B_LINES_COUNT - 1)) ? true : false;
         ret = spi_epd_send_data(bw_line_bytes_buffer, EPD1IN54B_BW_LINE_BYTES_COUNT, false);
@@ -420,9 +417,7 @@ esp_err_t spi_epd_clear_white() {
     if(ret != ESP_OK) {
         return ret;
     }
-    // vTaskDelay(1);
 
-    // ESP_LOGI(TAG, "-->> Attempt to send: %u red bytes x %u", chunk_size, red_chunks_count);
     for(size_t line_idx = 0; line_idx < EPD1IN54B_LINES_COUNT; ++line_idx) {
         const bool has_next_line = (line_idx < (EPD1IN54B_LINES_COUNT - 1)) ? true : false;
         ret = spi_epd_send_data(r_line_bytes_buffer, EPD1IN54B_R_LINE_BYTES_COUNT, false);
@@ -432,13 +427,80 @@ esp_err_t spi_epd_clear_white() {
     }
     vTaskDelay(1);
 
+    ESP_LOGI(TAG, "Sending done, waiting...");
     ret = spi_epd_send_cmd(0x12);
     if(ret != ESP_OK) {
         return ret;
     }
-    
     spi_epd_wait_until_not_busy();
     
     ESP_LOGI(TAG, "Clearing white done!");
+    return ESP_OK;
+}
+
+esp_err_t spi_epd_draw_sth() {
+    ESP_LOGI(TAG, "Drawing sth...");
+
+    esp_err_t ret = ESP_OK;
+
+    for(size_t line_byte_idx = 0; line_byte_idx < EPD1IN54B_BW_LINE_BYTES_COUNT; ++line_byte_idx) {
+        bw_line_bytes_buffer[line_byte_idx] = 0xFF; // full white
+    }
+    
+    /* Fill chunk buffer with black data */
+    for(size_t line_byte_idx = 0; line_byte_idx < EPD1IN54B_R_LINE_BYTES_COUNT; ++line_byte_idx) {
+        r_line_bytes_buffer[line_byte_idx] = 0x00; // full red
+    }
+
+    /* Black */
+    ret = spi_epd_send_cmd(0x10);
+    if(ret != ESP_OK) {
+        return ret;
+    }
+
+    for(size_t line_idx = 0; line_idx < 32; ++line_idx) {
+        const bool has_next_line = (line_idx < (EPD1IN54B_LINES_COUNT - 1)) ? true : false;
+        ret = spi_epd_send_data(bw_line_bytes_buffer, EPD1IN54B_BW_LINE_BYTES_COUNT, false);
+        if(ret != ESP_OK) {
+            return ret;
+        }
+    }
+    
+    for(size_t line_byte_idx = 0; line_byte_idx < EPD1IN54B_BW_LINE_BYTES_COUNT; ++line_byte_idx) {
+        bw_line_bytes_buffer[line_byte_idx] = 0x00; // full black
+    }
+
+    for(size_t line_idx = 0; line_idx < EPD1IN54B_LINES_COUNT - 32; ++line_idx) {
+        const bool has_next_line = (line_idx < (EPD1IN54B_LINES_COUNT - 1)) ? true : false;
+        ret = spi_epd_send_data(bw_line_bytes_buffer, EPD1IN54B_BW_LINE_BYTES_COUNT, false);
+        if(ret != ESP_OK) {
+            return ret;
+        }
+    }
+    vTaskDelay(1);
+
+    /* Red */
+    ret = spi_epd_send_cmd(0x13);
+    if(ret != ESP_OK) {
+        return ret;
+    }
+
+    for(size_t line_idx = 0; line_idx < 24; ++line_idx) {
+        const bool has_next_line = (line_idx < (EPD1IN54B_LINES_COUNT - 1)) ? true : false;
+        ret = spi_epd_send_data(r_line_bytes_buffer, EPD1IN54B_R_LINE_BYTES_COUNT, false);
+        if(ret != ESP_OK) {
+            return ret;
+        }
+    }
+    vTaskDelay(1);
+
+    ESP_LOGI(TAG, "Sth to draw sending done, waiting...");
+    ret = spi_epd_send_cmd(0x12);
+    if(ret != ESP_OK) {
+        return ret;
+    }
+    spi_epd_wait_until_not_busy();
+    
+    ESP_LOGI(TAG, "Drawing sth done!");
     return ESP_OK;
 }

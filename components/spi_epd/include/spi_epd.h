@@ -14,3 +14,5 @@ esp_err_t spi_epd_create();
 esp_err_t spi_epd_sleep();
 
 esp_err_t spi_epd_clear_white();
+
+esp_err_t spi_epd_draw_sth();
