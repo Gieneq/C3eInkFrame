@@ -41,6 +41,10 @@
         "dev_config.h": "c",
         "epd_1in54b.h": "c",
         "spi_master.h": "c",
-        "spi_epd.h": "c"
+        "spi_epd.h": "c",
+        "event_groups.h": "c",
+        "esp_types.h": "c",
+        "stdlib.h": "c",
+        "esp_err.h": "c"
     }
 }

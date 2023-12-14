@@ -40,22 +40,13 @@ void IRAM_ATTR gpio_isr_handler(void* arg) {
 /* Setup */
 
 static void setup_epb() {
-    // ESP_ERROR_CHECK(epb7_5inch_v2_create());
-    // ESP_ERROR_CHECK(epb7_5inch_v2_start());
-    // DEV_Module_Setup();
-    // EPD_1IN54B_Init();
-    // EPD_1IN54B_Clear();
     ESP_ERROR_CHECK(spi_epd_create());
-    vTaskDelay(pdMS_TO_TICKS(200));
-
-    ESP_ERROR_CHECK(spi_epd_clear_white());
-    vTaskDelay(pdMS_TO_TICKS(200));
-    
-    // vTaskDelay(pdMS_TO_TICKS(2000));
-    ESP_ERROR_CHECK(spi_epd_draw_sth());
-    // vTaskDelay(pdMS_TO_TICKS(2000));
-    
-    ESP_ERROR_CHECK(spi_epd_sleep());
+    ESP_ERROR_CHECK(spi_epd_start());
+    if(spi_epd_start_draw(portMAX_DELAY)) {
+        spi_epd_fill_color(SPI_EPD_COLOR_WHITE);
+        spi_epd_end_draw();
+    }
+    spi_epd_attempt_refresh(portMAX_DELAY);
 }
 
 static void setup_ts() {
@@ -122,11 +113,32 @@ void app_main(void) {
     refresh_sensors();
     int last_ts_counter = ts_counter;
 
+    int colorflag = 0;
+
     while(1) {
         if(last_ts_counter != ts_counter) {
             last_ts_counter = ts_counter;
             printf("GPIO Interrupt Triggered: %d!\n", ts_counter);
         }
         vTaskDelay(pdMS_TO_TICKS(500));
+
+        if(spi_epd_is_refreshed()) {
+        vTaskDelay(pdMS_TO_TICKS(2500));
+            if(spi_epd_start_draw(portMAX_DELAY)) {
+                if(colorflag == 0) {
+                    spi_epd_fill_color(SPI_EPD_COLOR_RED);
+                } else if(colorflag == 1) {
+                    spi_epd_fill_color(SPI_EPD_COLOR_BLACK);
+                } else {
+                    spi_epd_fill_color(SPI_EPD_COLOR_WHITE);
+                }
+                colorflag++;
+                if(colorflag > 2) {
+                    colorflag = 0;
+                }
+                spi_epd_end_draw();
+            }
+            spi_epd_attempt_refresh(portMAX_DELAY);
+        }
     }
 }
