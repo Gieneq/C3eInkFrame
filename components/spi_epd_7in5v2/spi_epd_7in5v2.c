@@ -15,9 +15,12 @@
 
 #define EPD_FRAMEBUFFER_CHUNK_SIZE (50)
 
-#define EPD_CHUNKS_COUNT (FRAMEBUFFER_SIZE / FRAMEBUFFER_CHUNK_SIZE)
+#define EPD_CHUNKS_COUNT (EPD_FRAMEBUFFER_SIZE / EPD_FRAMEBUFFER_CHUNK_SIZE)
 
 static uint8_t epd_framebuffer[EPD_FRAMEBUFFER_SIZE];
+
+static bool need_clear = false;
+static bool clear_to_white = true;
 
 #define COMMANDS_DATA_SIZE 42
 typedef struct command_data_size_t {
@@ -59,37 +62,52 @@ static const command_data_size_t panel_settings_data[] = {
     {0x65, {0x00, 0x00, 0x00, 0x00}, 4},  /* Resolution setting */
 
 
-    {0x50, {0x37}, 1},  /* VCOM_AND_DATA_INTERVAL_SETTING from datasheet must be 0x17, 
-                         * something about border */
-    {0x30, {0x39}, 1},  /* PLL_CONTROL, 0x2A in datasheet */
-    {0x61, {0xC8, 0x00, 0xC8}, 3},  /* TCON_RESOLUTION set x and y */
-    {0x82, {0x0E}, 1},  /* VCM_DC_SETTING_REGISTER */
+    // {0x50, {0x37}, 1},  /* VCOM_AND_DATA_INTERVAL_SETTING from datasheet must be 0x17, 
+    //                      * something about border */
+    // {0x30, {0x39}, 1},  /* PLL_CONTROL, 0x2A in datasheet */
+    // {0x61, {0xC8, 0x00, 0xC8}, 3},  /* TCON_RESOLUTION set x and y */
+    // {0x82, {0x0E}, 1},  /* VCM_DC_SETTING_REGISTER */
 };
 
 static const command_data_size_t lut_data[] = {
-    {0x20, {0x0, 0xF, 0xF, 0x0,	0x0, 0x1, 0x0, 0xF, 0x1, 0xF, 0x1, 0x2, 0x0, 0xF, 0xF, 0x0, 0x0, 0x1, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, }, 42}, /* vcom0 */
-    {0x21, {0x10,	0xF,	0xF,	0x0,	0x0,	0x1,	
+    {0x20, 
+    {0x0,	0xF,	0xF,	0x0,	0x0,	0x1,	
+	0x0,	0xF,	0x1,	0xF,	0x1,	0x2,	
+	0x0,	0xF,	0xF,	0x0,	0x0,	0x1,	
+	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
+	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
+	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
+	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,}, 42}, /* vcom0 */
+
+    {0x21, 
+    {0x10,	0xF,	0xF,	0x0,	0x0,	0x1,	
 	0x84,	0xF,	0x1,	0xF,	0x1,	0x2,	
 	0x20,	0xF,	0xF,	0x0,	0x0,	0x1,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0}, 42}, /* ww    */
-    {0x22, {0x10,	0xF,	0xF,	0x0,	0x0,	0x1,	
+
+    {0x22, 
+    {0x10,	0xF,	0xF,	0x0,	0x0,	0x1,	
 	0x84,	0xF,	0x1,	0xF,	0x1,	0x2,	
 	0x20,	0xF,	0xF,	0x0,	0x0,	0x1,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0}, 42}, /* bb    */
-    {0x23, {0x80,	0xF,	0xF,	0x0,	0x0,	0x1,	
+
+    {0x23, 
+    {0x80,	0xF,	0xF,	0x0,	0x0,	0x1,	
 	0x84,	0xF,	0x1,	0xF,	0x1,	0x2,	
 	0x40,	0xF,	0xF,	0x0,	0x0,	0x1,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0}, 42}, /* wb    */
-    {0x24, {0x80,	0xF,	0xF,	0x0,	0x0,	0x1,	
+
+    {0x24, 
+    {0x80,	0xF,	0xF,	0x0,	0x0,	0x1,	
 	0x84,	0xF,	0x1,	0xF,	0x1,	0x2,	
 	0x40,	0xF,	0xF,	0x0,	0x0,	0x1,	
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0,	
@@ -230,12 +248,17 @@ static void epd_spi_pre_transfer_callback(spi_transaction_t *t) {
 }
 
 static void epd_wait_until_not_busy() {
-    do {
-        if(epd_send_cmd(0x71) != ESP_OK) {
-            ESP_LOGE(TAG, "Sending cmd 0x71 failed during \'epd_wait_until_not_busy\'");
-        }
+    /* 1 is not busy, 0 is busy */
+    // do {
+    //     // if(epd_send_cmd(0x71) != ESP_OK) {
+    //     //     ESP_LOGE(TAG, "Sending cmd 0x71 failed during \'epd_wait_until_not_busy\'");
+    //     // }
+    //     vTaskDelay(1);
+    // } while(gpio_get_level(EPD7IN5V2_BUSY_PIN) == 0);
+    
+    while(gpio_get_level(EPD7IN5V2_BUSY_PIN) == 0) {
         vTaskDelay(1);
-    } while(gpio_get_level(EPD7IN5V2_BUSY_PIN) == 0);
+    }
 
     ESP_LOGD(TAG, "Waiting done!");
 }
@@ -362,7 +385,7 @@ static esp_err_t epd_apply_command_data_size(const command_data_size_t* cds, con
             fflush(stdout);
             return ret;
         }
-        vTaskDelay(1);
+        ets_delay_us(10);
 
         if(cds_count > 0) {
             /* cds_count is small compared to max transer size */
@@ -372,7 +395,7 @@ static esp_err_t epd_apply_command_data_size(const command_data_size_t* cds, con
                 return ret;
             }
         }
-        vTaskDelay(1);
+        ets_delay_us(100);
     }
 
     return ESP_OK;
@@ -476,24 +499,48 @@ static esp_err_t epd_send_refresh() {
         return ret;
     }
     
-    /* Black */
-    ret = epd_send_cmd(0x10);
+    /* Black & White framebuffer data */
+    if (need_clear == true) {
+        if (clear_to_white == true) {
+            ret = epd_send_cmd(0x10);
+            if(ret != ESP_OK) {
+                return ret;
+            }
+
+            for(size_t chunk_idx = 0; chunk_idx < EPD_CHUNKS_COUNT; ++chunk_idx) {
+                const bool has_next_chunk = (chunk_idx < (EPD_CHUNKS_COUNT - 1)) ? true : false;
+                const bool extend_cs = has_next_chunk;
+                ret = epd_send_data(
+                    epd_framebuffer + (chunk_idx * EPD_FRAMEBUFFER_CHUNK_SIZE),
+                    EPD_FRAMEBUFFER_CHUNK_SIZE,
+                    extend_cs
+                );
+                if(ret != ESP_OK) {
+                    return ret;
+                }
+            }
+            vTaskDelay(1);
+        }
+    }
+
+    ret = epd_send_cmd(0x13);
     if(ret != ESP_OK) {
         return ret;
     }
 
-    // for(size_t chunk_idx = 0; chunk_idx < BLACK_CHUNKS_COUNT; ++chunk_idx) {
-    //     // const bool has_next_line = (line_idx < (EPD1IN54B_LINES_COUNT - 1)) ? true : false;
-    //     ret = spi_epd_send_data(
-    //         framebuffer_black + (chunk_idx * FRAMEBUFFER_CHUNK_SIZE),
-    //         FRAMEBUFFER_CHUNK_SIZE,
-    //         false
-    //     );
-    //     if(ret != ESP_OK) {
-    //         return ret;
-    //     }
-    // }
-    // vTaskDelay(1);
+    for(size_t chunk_idx = 0; chunk_idx < EPD_CHUNKS_COUNT; ++chunk_idx) {
+        const bool has_next_chunk = (chunk_idx < (EPD_CHUNKS_COUNT - 1)) ? true : false;
+        const bool extend_cs = has_next_chunk;
+        ret = epd_send_data(
+            epd_framebuffer + (chunk_idx * EPD_FRAMEBUFFER_CHUNK_SIZE),
+            EPD_FRAMEBUFFER_CHUNK_SIZE,
+            extend_cs
+        );
+        if(ret != ESP_OK) {
+            return ret;
+        }
+    }
+    vTaskDelay(1);
 
     ESP_LOGI(TAG, "SPI sending done - bus released. Waiting till refreshed...");
     ret = epd_send_cmd(0x12);
@@ -501,7 +548,7 @@ static esp_err_t epd_send_refresh() {
         return ret;
     }
 
-    vTaskDelay(1);
+    vTaskDelay(10);
 
     epd_wait_until_not_busy();
 
@@ -575,8 +622,10 @@ void epd7in5v2_fill_color(const bool white) {
      * 0x1 -> BLACK
     */
 
-    uint8_t color_8_pixels = (white == true) ? 0x00 : 0xFF;
+   need_clear = true;
+   clear_to_white = white;
 
+    uint8_t color_8_pixels = (white == true) ? 0x00 : 0xFF;
     /* Fill framebuffers */
     memset(epd_framebuffer, color_8_pixels, sizeof(epd_framebuffer));
     ESP_LOGI(TAG, "Filling framebuffer done!");

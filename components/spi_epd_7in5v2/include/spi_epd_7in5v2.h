@@ -11,12 +11,12 @@
 
 #define EPD7IN5V2_SPI         SPI2_HOST
 
-#define EPD7IN5V2_RST_PIN     GPIO_NUM_7
-#define EPD7IN5V2_PWR_PIN     GPIO_NUM_0
-#define EPD7IN5V2_DC_PIN      GPIO_NUM_6
-#define EPD7IN5V2_BUSY_PIN    GPIO_NUM_5
+#define EPD7IN5V2_RST_PIN     GPIO_NUM_5 /* 0 = reseting */
+#define EPD7IN5V2_PWR_PIN     GPIO_NUM_0 /* 0 = off, 1 = on */
+#define EPD7IN5V2_DC_PIN      GPIO_NUM_6 /* 0 = cmd, 1 = data*/
+#define EPD7IN5V2_BUSY_PIN    GPIO_NUM_7 /* 0 = busy */
 
-#define EPD7IN5V2_CS_PIN      GPIO_NUM_3
+#define EPD7IN5V2_CS_PIN      GPIO_NUM_3 /* 0 = active */
 #define EPD7IN5V2_DIN_PIN     GPIO_NUM_1
 #define EPD7IN5V2_CLK_PIN     GPIO_NUM_4
 
