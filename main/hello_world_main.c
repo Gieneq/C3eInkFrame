@@ -20,10 +20,7 @@
 #include "shtc3_sensor.h"
 #include "gindicator.h"
 #include "gcaptive.h"
-// #include "epb7_5inch_v2.h"
-// #include "EPD_1in54b.h"
-// #include "DEV_Config.h"
-#include "spi_epd.h"
+#include "spi_epd_7in5v2.h"
 
 #define TOUCH_SENS_PIN GPIO_NUM_9
 
@@ -40,13 +37,13 @@ void IRAM_ATTR gpio_isr_handler(void* arg) {
 /* Setup */
 
 static void setup_epb() {
-    ESP_ERROR_CHECK(spi_epd_create());
-    ESP_ERROR_CHECK(spi_epd_start());
-    if(spi_epd_start_draw(portMAX_DELAY)) {
-        spi_epd_fill_color(SPI_EPD_COLOR_WHITE);
-        spi_epd_end_draw();
+    ESP_ERROR_CHECK(epd7in5v2_create());
+    ESP_ERROR_CHECK(epd7in5v2_start());
+    if(epd7in5v2_start_draw(portMAX_DELAY)) {
+        epd7in5v2_fill_color(false);
+        epd7in5v2_stop_draw();
     }
-    spi_epd_attempt_refresh(portMAX_DELAY);
+    epd7in5v2_attempt_refresh(portMAX_DELAY);
 }
 
 static void setup_ts() {
@@ -64,14 +61,14 @@ static void setup_ts() {
 }
 
 static void setup_sensors() {
-    esp_err_t ret = shtc3_init();
-    ESP_ERROR_CHECK(ret);
+    // esp_err_t ret = shtc3_init();
+    // ESP_ERROR_CHECK(ret);
 
-    shtc3_soft_reset();
+    // shtc3_soft_reset();
 
-    uint16_t sesns_id = shtc3_read_id();
+    // uint16_t sesns_id = shtc3_read_id();
 
-    ESP_LOGI(TAG, "Got ID: 0x%04X", sesns_id);
+    // ESP_LOGI(TAG, "Got ID: 0x%04X", sesns_id);
 
 }
 
@@ -87,19 +84,19 @@ static void setup_gemeral() {
 }
 
 static void setup_connectivity() {
-    gcaptive_create();
-    gcaptive_start();
+    // gcaptive_create();
+    // gcaptive_start();
 }
 
 /* Refresh */
 
 static void refresh_sensors() {
-    shtc3_refresh();
+    // shtc3_refresh();
 
-    const float temperature = shtc3_get_temperature();
-    const float humidity = shtc3_get_humidity();
+    // const float temperature = shtc3_get_temperature();
+    // const float humidity = shtc3_get_humidity();
 
-    ESP_LOGI(TAG, "Temperature is %.2f*C, humidity is: %.2f%%", temperature, humidity);
+    // ESP_LOGI(TAG, "Temperature is %.2f*C, humidity is: %.2f%%", temperature, humidity);
 }
 
 void app_main(void) {
@@ -113,7 +110,7 @@ void app_main(void) {
     refresh_sensors();
     int last_ts_counter = ts_counter;
 
-    int colorflag = 0;
+    // int colorflag = 0;
 
     while(1) {
         if(last_ts_counter != ts_counter) {
@@ -122,23 +119,23 @@ void app_main(void) {
         }
         vTaskDelay(pdMS_TO_TICKS(500));
 
-        if(spi_epd_is_refreshed()) {
-        vTaskDelay(pdMS_TO_TICKS(2500));
-            if(spi_epd_start_draw(portMAX_DELAY)) {
-                if(colorflag == 0) {
-                    spi_epd_fill_color(SPI_EPD_COLOR_RED);
-                } else if(colorflag == 1) {
-                    spi_epd_fill_color(SPI_EPD_COLOR_BLACK);
-                } else {
-                    spi_epd_fill_color(SPI_EPD_COLOR_WHITE);
-                }
-                colorflag++;
-                if(colorflag > 2) {
-                    colorflag = 0;
-                }
-                spi_epd_end_draw();
-            }
-            spi_epd_attempt_refresh(portMAX_DELAY);
-        }
+        // if(spi_epd_is_refreshed()) {
+        // vTaskDelay(pdMS_TO_TICKS(2500));
+        //     if(spi_epd_start_draw(portMAX_DELAY)) {
+        //         if(colorflag == 0) {
+        //             spi_epd_fill_color(SPI_EPD_COLOR_RED);
+        //         } else if(colorflag == 1) {
+        //             spi_epd_fill_color(SPI_EPD_COLOR_BLACK);
+        //         } else {
+        //             spi_epd_fill_color(SPI_EPD_COLOR_WHITE);
+        //         }
+        //         colorflag++;
+        //         if(colorflag > 2) {
+        //             colorflag = 0;
+        //         }
+        //         spi_epd_end_draw();
+        //     }
+        //     spi_epd_attempt_refresh(portMAX_DELAY);
+        // }
     }
 }
