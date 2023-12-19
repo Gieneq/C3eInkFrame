@@ -631,6 +631,28 @@ void epd7in5v2_fill_color(const bool white) {
     ESP_LOGI(TAG, "Filling framebuffer done!");
 }
 
+void epd7in5v2_set_pixel(const int32_t x, const int32_t y, const bool white) {
+    if((x < 0) || (x >= EPD7IN5V2_WIDTH) || (y < 0) || (y >= EPD7IN5V2_HEIGHT)) {
+        return;
+    }
+
+    const uint32_t px_idx = x + y * EPD7IN5V2_WIDTH;
+    const uint32_t byte_idx = px_idx / 8;
+    const uint8_t bit_offset = 8 - (px_idx % 8) - 1;
+
+    // epd_framebuffer[byte_idx] = (white == true) ? 0x00 : 0xFF;
+
+    epd_framebuffer[byte_idx] = (epd_framebuffer[byte_idx] & ~(1 << bit_offset)) | (((white == true) ? 0x0 : 0x1) << bit_offset);
+}
+
+void epd7in5v2_fill_rect(const int32_t x, const int32_t y, const uint32_t width, const uint32_t height, const bool white) {
+    for (uint32_t iy=0; iy<height; ++iy) {
+        for (uint32_t ix=0; ix<width; ++ix) {
+            epd7in5v2_set_pixel(x + ix, y + iy, white);
+        }
+    }
+}
+
 bool epd7in5v2_attempt_refresh(TickType_t bus_access_timeout) {
     xEventGroupWaitBits(epd_events, EPD_EVENTS_ALREADY_REFRESHED, pdTRUE, pdFALSE, bus_access_timeout);
     xEventGroupSetBits(epd_events, EPD_EVENTS_NEED_REFRESH);

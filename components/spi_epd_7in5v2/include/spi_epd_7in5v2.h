@@ -47,7 +47,9 @@ void epd7in5v2_stop_draw();
 /* Drawing tools */
 void epd7in5v2_fill_color(const bool white);
 
-// esp_err_t epd7in5v2_set_pixel(const uint32_t x, const uint32_t y, const bool white);
+void epd7in5v2_set_pixel(const int32_t x, const int32_t y, const bool white);
+
+void epd7in5v2_fill_rect(const int32_t x, const int32_t y, const uint32_t width, const uint32_t height, const bool white);
 
 bool epd7in5v2_is_refreshed();
 

@@ -40,7 +40,15 @@ static void setup_epb() {
     ESP_ERROR_CHECK(epd7in5v2_create());
     ESP_ERROR_CHECK(epd7in5v2_start());
     if(epd7in5v2_start_draw(portMAX_DELAY)) {
-        epd7in5v2_fill_color(false);
+        epd7in5v2_fill_color(true);
+
+        for(int i =0; i< 20; ++i) {
+            epd7in5v2_fill_rect(i*5, i*20, 20 + i*20, i, false);
+        }
+
+        // epd7in5v2_fill_rect(200, 200, 10, 10, false);
+        // epd7in5v2_fill_rect(210, 210, 4, 4, false);
+        // epd7in5v2_fill_rect(214, 214, 2, 2, false);
         epd7in5v2_stop_draw();
     }
     epd7in5v2_attempt_refresh(portMAX_DELAY);
@@ -110,7 +118,7 @@ void app_main(void) {
     refresh_sensors();
     int last_ts_counter = ts_counter;
 
-    int colorflag = 0;
+    // int colorflag = 0;
 
     while(1) {
         if(last_ts_counter != ts_counter) {
@@ -119,18 +127,18 @@ void app_main(void) {
         }
         vTaskDelay(pdMS_TO_TICKS(500));
 
-        if(epd7in5v2_is_refreshed()) {
-        vTaskDelay(pdMS_TO_TICKS(2500));
-            if(epd7in5v2_start_draw(portMAX_DELAY)) {
-                if(colorflag == 0) {
-                    epd7in5v2_fill_color(true);
-                } else {
-                    epd7in5v2_fill_color(false);
-                }
-                colorflag ^= 1;
-                epd7in5v2_stop_draw();
-            }
-            epd7in5v2_attempt_refresh(portMAX_DELAY);
-        }
+        // if(epd7in5v2_is_refreshed()) {
+        // vTaskDelay(pdMS_TO_TICKS(2500));
+        //     if(epd7in5v2_start_draw(portMAX_DELAY)) {
+        //         if(colorflag == 0) {
+        //             epd7in5v2_fill_color(true);
+        //         } else {
+        //             epd7in5v2_fill_color(false);
+        //         }
+        //         colorflag ^= 1;
+        //         epd7in5v2_stop_draw();
+        //     }
+        //     epd7in5v2_attempt_refresh(portMAX_DELAY);
+        // }
     }
 }
