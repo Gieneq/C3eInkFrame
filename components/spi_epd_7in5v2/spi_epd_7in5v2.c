@@ -19,8 +19,8 @@
 
 static uint8_t epd_framebuffer[EPD_FRAMEBUFFER_SIZE];
 
-static bool need_clear = false;
-static bool clear_to_white = true;
+// static bool need_clear = false;
+// static bool clear_to_white = true;
 
 #define COMMANDS_DATA_SIZE 42
 typedef struct command_data_size_t {
@@ -231,18 +231,22 @@ static void epd_spi_pre_transfer_callback(spi_transaction_t *t) {
 
 static void epd_wait_until_not_busy() {
     /* 1 is not busy, 0 is busy */
-    // do {
-    //     // if(epd_send_cmd(0x71) != ESP_OK) {
-    //     //     ESP_LOGE(TAG, "Sending cmd 0x71 failed during \'epd_wait_until_not_busy\'");
-    //     // }
-    //     vTaskDelay(1);
-    // } while(gpio_get_level(EPD7IN5V2_BUSY_PIN) == 0);
-    
-    while(gpio_get_level(EPD7IN5V2_BUSY_PIN) == 0) {
-        vTaskDelay(1);
-    }
+    ESP_LOGD(TAG, "Waiting until not busy...");
 
-    ESP_LOGD(TAG, "Waiting done!");
+    do {
+        if(epd_send_cmd(0x71) != ESP_OK) {
+            ESP_LOGE(TAG, "Sending cmd 0x71 failed during \'epd_wait_until_not_busy\'");
+        }
+        vTaskDelay(25);
+        ESP_LOGE(TAG, "...");
+    } while(gpio_get_level(EPD7IN5V2_BUSY_PIN) == 0);
+    vTaskDelay(20);
+    
+    // while(gpio_get_level(EPD7IN5V2_BUSY_PIN) == 0) {
+    //     vTaskDelay(1);
+    // }
+
+    ESP_LOGD(TAG, "Waiting done, not busy!");
 }
 
 static esp_err_t epd_setup_peripherals() {
@@ -415,9 +419,9 @@ static esp_err_t epd_write_settings() {
         return ret;
     }
     
-    spi_device_release_bus(epd_spi_device_handle);
-
     epd_wait_until_not_busy();
+
+    spi_device_release_bus(epd_spi_device_handle);
 
     ESP_LOGI(TAG, "Initializing done!");
     return ESP_OK;
@@ -442,28 +446,28 @@ static esp_err_t epd_sleep() {
     esp_err_t ret = ESP_OK;
     ESP_LOGI(TAG, "Going sleep...");
 
-    ret = spi_device_acquire_bus(epd_spi_device_handle, portMAX_DELAY);
-    if (ret != ESP_OK) {
-        ESP_LOGE(TAG, "Send Data: Aquiring bus failed");
-        fflush(stdout);
-        return ret;
-    }
+    // ret = spi_device_acquire_bus(epd_spi_device_handle, portMAX_DELAY);
+    // if (ret != ESP_OK) {
+    //     ESP_LOGE(TAG, "Send Data: Aquiring bus failed");
+    //     fflush(stdout);
+    //     return ret;
+    // }
     
-    // ret = spi_epd_apply_command_data_size(sleep_initialization_data, sizeof(sleep_initialization_data) / sizeof(sleep_initialization_data[0]));
-    // if(ret != ESP_OK) {
-    //     return ret;
-    // }
+    // // ret = spi_epd_apply_command_data_size(sleep_initialization_data, sizeof(sleep_initialization_data) / sizeof(sleep_initialization_data[0]));
+    // // if(ret != ESP_OK) {
+    // //     return ret;
+    // // }
 
-    // spi_epd_wait_until_not_busy();
+    // // spi_epd_wait_until_not_busy();
 
-    // vTaskDelay(pdMS_TO_TICKS(1000));
+    // // vTaskDelay(pdMS_TO_TICKS(1000));
 
-    // ret = spi_epd_send_cmd(sleep_power_off_cmd);
-    // if(ret != ESP_OK) {
-    //     return ret;
-    // }
+    // // ret = spi_epd_send_cmd(sleep_power_off_cmd);
+    // // if(ret != ESP_OK) {
+    // //     return ret;
+    // // }
 
-    spi_device_release_bus(epd_spi_device_handle);
+    // spi_device_release_bus(epd_spi_device_handle);
 
     ESP_LOGI(TAG, "Going sleep done!");
     epd_is_sleeping = true;
@@ -481,30 +485,7 @@ static esp_err_t epd_send_refresh() {
         return ret;
     }
     
-    /* Black & White framebuffer data */
-    if (need_clear == true) {
-        if (clear_to_white == true) {
-            ret = epd_send_cmd(0x10);
-            if(ret != ESP_OK) {
-                return ret;
-            }
-
-            for(size_t chunk_idx = 0; chunk_idx < EPD_CHUNKS_COUNT; ++chunk_idx) {
-                const bool has_next_chunk = (chunk_idx < (EPD_CHUNKS_COUNT - 1)) ? true : false;
-                const bool extend_cs = has_next_chunk;
-                ret = epd_send_data(
-                    epd_framebuffer + (chunk_idx * EPD_FRAMEBUFFER_CHUNK_SIZE),
-                    EPD_FRAMEBUFFER_CHUNK_SIZE,
-                    extend_cs
-                );
-                if(ret != ESP_OK) {
-                    return ret;
-                }
-            }
-            vTaskDelay(1);
-        }
-    }
-
+    /* Send data of framebuffer */
     ret = epd_send_cmd(0x13);
     if(ret != ESP_OK) {
         return ret;
@@ -523,16 +504,16 @@ static esp_err_t epd_send_refresh() {
         }
     }
     vTaskDelay(1);
-
     ESP_LOGI(TAG, "SPI sending done - bus released. Waiting till refreshed...");
+
+    /* Refresh the display */
     ret = epd_send_cmd(0x12);
     if(ret != ESP_OK) {
         return ret;
     }
-
     vTaskDelay(10);
-
     epd_wait_until_not_busy();
+    spi_device_release_bus(epd_spi_device_handle);
 
     return ESP_OK;
 }
@@ -618,8 +599,8 @@ void epd7in5v2_fill_color(const bool white) {
      * 0x1 -> BLACK
     */
 
-   need_clear = true;
-   clear_to_white = white;
+//    need_clear = true;
+//    clear_to_white = white;
 
     uint8_t color_8_pixels = (white == true) ? 0x00 : 0xFF;
     /* Fill framebuffers */
