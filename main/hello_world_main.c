@@ -42,8 +42,10 @@ static void setup_epb() {
     if(epd7in5v2_start_draw(portMAX_DELAY)) {
         epd7in5v2_fill_color(true);
 
+        epd7in5v2_set_rotation(2);
+
         for(int i =0; i< 20; ++i) {
-            epd7in5v2_fill_rect(i*5, i*20, 20 + i*20, i, false);
+            epd7in5v2_fill_rect(i*5, i*10, 10 + i*10, i, false);
         }
 
         // epd7in5v2_fill_rect(200, 200, 10, 10, false);

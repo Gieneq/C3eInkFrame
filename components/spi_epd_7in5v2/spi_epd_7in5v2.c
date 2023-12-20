@@ -29,10 +29,6 @@ typedef struct command_data_size_t {
     uint8_t data_length;
 } command_data_size_t;
 
-// static const uint8_t Voltage_Frame_7IN5_V2[]={
-// 	0x6, 0x3F, 0x3F, 0x11, 0x24, 0x7, 0x17,
-// };
-
 /* Commands and commands sets */
 static const command_data_size_t power_settings_data[] = {
     {0x01, {0x17, 0x17, 0x3F, 0x3F, 0x11}, 5},    /* Power settings:
@@ -60,13 +56,6 @@ static const command_data_size_t panel_settings_data[] = {
     {0x60, {0x22}, 1},  /* TCON SETTING */
 
     {0x65, {0x00, 0x00, 0x00, 0x00}, 4},  /* Resolution setting */
-
-
-    // {0x50, {0x37}, 1},  /* VCOM_AND_DATA_INTERVAL_SETTING from datasheet must be 0x17, 
-    //                      * something about border */
-    // {0x30, {0x39}, 1},  /* PLL_CONTROL, 0x2A in datasheet */
-    // {0x61, {0xC8, 0x00, 0xC8}, 3},  /* TCON_RESOLUTION set x and y */
-    // {0x82, {0x0E}, 1},  /* VCM_DC_SETTING_REGISTER */
 };
 
 static const command_data_size_t lut_data[] = {
@@ -116,17 +105,6 @@ static const command_data_size_t lut_data[] = {
 	0x0,	0x0,	0x0,	0x0,	0x0,	0x0}, 42}, /* bb    */
 };
 
-
-
-
-
-// static const command_data_size_t sleep_initialization_data[] = {
-//     {0x50, {0x17}, 1}, /* VCOM_AND_DATA_INTERVAL_SETTING */
-//     {0x82, {0x00}, 1}, /* VCM_DC_SETTING_REGISTER */
-//     {0x01, {0x02, 0x00, 0x00, 0x00}, 4}, /* POWER_SETTING */
-// };
-// static const uint8_t sleep_power_off_cmd = 0x02;
-
 static const char* TAG = "EPD7IN5V2";
 
 static spi_device_handle_t epd_spi_device_handle;
@@ -140,6 +118,10 @@ static SemaphoreHandle_t epd_framebuffer_mutex;
 static TaskHandle_t epd_task_handle;
 
 static bool epd_is_sleeping = false;
+
+static uint32_t epd_rotation = 0;
+static uint32_t epd_width = EPD7IN5V2_WIDTH;
+static uint32_t epd_height = EPD7IN5V2_HEIGHT;
 
 /* Static prototypes */
 
@@ -616,6 +598,20 @@ esp_err_t epd7in5v2_stop() {
     return ESP_FAIL; //todo not implemented
 }
 
+void epd7in5v2_set_rotation(int rot) {
+    epd_rotation = ((rot % 4) + 4) % 4;
+    if ((rot % 2) == 0) {
+        epd_width = EPD7IN5V2_WIDTH;
+        epd_height = EPD7IN5V2_HEIGHT;
+    } else {
+        epd_width = EPD7IN5V2_HEIGHT;
+        epd_height = EPD7IN5V2_WIDTH;
+    }
+
+    /* Pixels probably are invalid so clear them to white */
+    epd7in5v2_fill_color(true);
+}
+
 void epd7in5v2_fill_color(const bool white) {
     /* Black & white:
      * 0x0 -> WHITE
@@ -632,13 +628,20 @@ void epd7in5v2_fill_color(const bool white) {
 }
 
 void epd7in5v2_set_pixel(const int32_t x, const int32_t y, const bool white) {
-    if((x < 0) || (x >= EPD7IN5V2_WIDTH) || (y < 0) || (y >= EPD7IN5V2_HEIGHT)) {
+    if((x < 0) || (x >= epd_width) || (y < 0) || (y >= epd_height)) {
         return;
     }
 
-    const uint32_t px_idx = x + y * EPD7IN5V2_WIDTH;
-    const uint32_t byte_idx = px_idx / 8;
-    const uint8_t bit_offset = 8 - (px_idx % 8) - 1;
+    uint32_t px_idx = x + y * EPD7IN5V2_WIDTH;
+    uint32_t byte_idx = px_idx / 8;
+    uint8_t bit_offset = 8 - (px_idx % 8) - 1;
+
+    if (epd_rotation == 2) {
+        const uint32_t total_pixels = EPD7IN5V2_WIDTH * EPD7IN5V2_HEIGHT;
+        px_idx = total_pixels - (x + y * EPD7IN5V2_WIDTH) - 1;
+        byte_idx = px_idx / 8;
+        bit_offset = 8 - (px_idx % 8) - 1;
+    }
 
     // epd_framebuffer[byte_idx] = (white == true) ? 0x00 : 0xFF;
 

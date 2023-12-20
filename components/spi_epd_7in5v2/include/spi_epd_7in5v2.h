@@ -37,6 +37,8 @@ esp_err_t epd7in5v2_start();
 
 esp_err_t epd7in5v2_stop();
 
+void epd7in5v2_set_rotation(int rot);
+
 
 /* Drawing environment - wrap all drawing tools */
 bool epd7in5v2_start_draw(TickType_t timeout);
