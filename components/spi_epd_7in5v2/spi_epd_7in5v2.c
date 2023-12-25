@@ -11,6 +11,8 @@
 #include <esp_log.h>
 #include <rom/ets_sys.h>
 
+#include "epd_fonts.h"
+
 #define EPD_FRAMEBUFFER_SIZE   ((EPD7IN5V2_WIDTH * EPD7IN5V2_HEIGHT) / 8)
 
 #define EPD_FRAMEBUFFER_CHUNK_SIZE (50)
@@ -18,9 +20,6 @@
 #define EPD_CHUNKS_COUNT (EPD_FRAMEBUFFER_SIZE / EPD_FRAMEBUFFER_CHUNK_SIZE)
 
 static uint8_t epd_framebuffer[EPD_FRAMEBUFFER_SIZE];
-
-// static bool need_clear = false;
-// static bool clear_to_white = true;
 
 #define COMMANDS_DATA_SIZE 42
 typedef struct command_data_size_t {
@@ -657,4 +656,41 @@ void epd7in5v2_stop_draw() {
 bool epd7in5v2_is_refreshed() {
     const EventBits_t bits = xEventGroupGetBits(epd_events);
     return ((bits & EPD_EVENTS_ALREADY_REFRESHED) > 0) ? true : false;
+}
+
+static void epd7in5v2_draw_char(const int32_t x, const int32_t y, const epd_font_t* font, char ch) {
+    const uint8_t bytes_per_line = (font->width / 8) + ((font->width % 8) > 0 ? 1 : 0);
+    if ((ch < ' ') || (ch > '~')) {
+        ch = '?';
+    }
+    const int32_t char_idx = ch - ' ';
+
+    for(int32_t i_line = 0; i_line < font->height; ++i_line) {
+        for(int32_t i_byte = 0; i_byte < bytes_per_line; ++i_byte) {
+            const int32_t byte_idx = char_idx * (font->height * bytes_per_line) 
+                + i_line * bytes_per_line + i_byte;
+            const uint8_t font_byte = font->table[byte_idx];
+
+            /* Set pixels based on byte of font table */
+            for(int32_t i_px = 0; i_px < 8; ++i_px) {
+                epd7in5v2_set_pixel(
+                    x + i_byte*8 +i_px,
+                    y + i_line,
+                    (font_byte & (1<<(8 - i_px - 1))) > 0 ? false : true
+                );
+            }
+        }
+    }
+
+}
+
+void epd7in5v2_draw_text(const int32_t x, const int32_t y, const uint8_t fontsize, const char* text) {
+    const epd_font_t* font = epd_fonts_get_font(fontsize);
+    const uint32_t chars_count = strlen(text);
+
+    for(uint32_t char_idx = 0; char_idx < chars_count; ++char_idx) {
+        const uint32_t x_offset = char_idx * font->width;
+        const char ch = text[char_idx];
+        epd7in5v2_draw_char(x + x_offset, y, font, ch);
+    }
 }

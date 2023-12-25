@@ -49,6 +49,7 @@
         "esp_log.h": "c",
         "inttypes.h": "c",
         "ets_sys.h": "c",
-        "sdkconfig.h": "c"
+        "sdkconfig.h": "c",
+        "epd_fonts.h": "c"
     }
 }

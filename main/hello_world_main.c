@@ -22,7 +22,7 @@
 #include "gcaptive.h"
 #include "spi_epd_7in5v2.h"
 
-#define TOUCH_SENS_PIN GPIO_NUM_9
+#define TOUCH_SENS_PIN GPIO_NUM_20
 
 static const char* TAG = "Main";
 
@@ -43,11 +43,13 @@ static void setup_epb() {
     if(epd7in5v2_start_draw(portMAX_DELAY)) {
         epd7in5v2_fill_color(true);
 
-        epd7in5v2_set_rotation(0);
+        epd7in5v2_set_rotation(2);
 
         for(int i =0; i< 20; ++i) {
             epd7in5v2_fill_rect(i*5, i*10, 10 + i*10, i, false);
         }
+
+        epd7in5v2_draw_text(200, 100, 24, "Kicia krawcowa <3");
         epd7in5v2_stop_draw();
     }
     epd7in5v2_attempt_refresh(portMAX_DELAY);
@@ -59,7 +61,7 @@ static void setup_ts() {
         .mode = GPIO_MODE_INPUT,
         .pull_up_en = GPIO_PULLUP_ENABLE,
         .pull_down_en = GPIO_PULLUP_DISABLE,
-        .intr_type = GPIO_INTR_POSEDGE
+        .intr_type = GPIO_INTR_NEGEDGE
     };
 
     gpio_config(&gpio_ts_config);
@@ -129,18 +131,18 @@ void app_main(void) {
 
         rot += 2;
 
-        if(epd7in5v2_is_refreshed()) {
-            if(epd7in5v2_start_draw(portMAX_DELAY)) {
-                epd7in5v2_fill_color(true);
+        // if(epd7in5v2_is_refreshed()) {
+        //     if(epd7in5v2_start_draw(portMAX_DELAY)) {
+        //         epd7in5v2_fill_color(true);
 
-                epd7in5v2_set_rotation(rot);
+        //         epd7in5v2_set_rotation(rot);
 
-                for(int i =0; i< 20; ++i) {
-                    epd7in5v2_fill_rect(i*5, i*10, 10 + i*10, i, false);
-                }
-                epd7in5v2_stop_draw();
-            }
-            epd7in5v2_attempt_refresh(portMAX_DELAY);
-        }
+        //         for(int i =0; i< 20; ++i) {
+        //             epd7in5v2_fill_rect(i*5, i*10, 10 + i*10, i, false);
+        //         }
+        //         epd7in5v2_stop_draw();
+        //     }
+        //     epd7in5v2_attempt_refresh(portMAX_DELAY);
+        // }
     }
 }

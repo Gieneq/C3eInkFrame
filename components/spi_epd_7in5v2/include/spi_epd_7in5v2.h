@@ -14,7 +14,7 @@
 #define EPD7IN5V2_RST_PIN     GPIO_NUM_5 /* 0 = reseting */
 #define EPD7IN5V2_PWR_PIN     GPIO_NUM_7 /* 0 = off, 1 = on */
 #define EPD7IN5V2_DC_PIN      GPIO_NUM_6 /* 0 = cmd, 1 = data*/
-#define EPD7IN5V2_BUSY_PIN    GPIO_NUM_0 /* 0 = busy */
+#define EPD7IN5V2_BUSY_PIN    GPIO_NUM_21 /* 0 = busy */
 
 #define EPD7IN5V2_CS_PIN      GPIO_NUM_3 /* 0 = active */
 #define EPD7IN5V2_DIN_PIN     GPIO_NUM_1
@@ -58,3 +58,4 @@ bool epd7in5v2_is_refreshed();
 /* Transfer drawn stuff onto display */
 bool epd7in5v2_attempt_refresh(TickType_t bus_access_timeout);
 
+void epd7in5v2_draw_text(const int32_t x, const int32_t y, const uint8_t fontsize, const char* text);
