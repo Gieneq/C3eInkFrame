@@ -38,7 +38,22 @@
 extern const char root_start[] asm("_binary_root_html_start");
 extern const char root_end[] asm("_binary_root_html_end");
 
+#define GCAPTIVE_SSID_SIZE (64)
+#define GCAPTIVE_PSSWD_SIZE (64)
+#define GCAPTIVE_IPV4_SIZE (16)
+static struct {
+    char ssid[GCAPTIVE_SSID_SIZE];
+    char psswd[GCAPTIVE_PSSWD_SIZE];
+    char ipv4[GCAPTIVE_IPV4_SIZE];
+    bool is_started;
+} gcaptive_data;
+
+static connected_device_data_t connected_devices_data[EXAMPLE_MAX_STA_CONN];
+static uint8_t connected_devices_count = 0;
+
 static const char *TAG = "example";
+
+static bool connected_devices_has_changed = false;
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
@@ -47,10 +62,21 @@ static void wifi_event_handler(void *arg, esp_event_base_t event_base,
         wifi_event_ap_staconnected_t *event = (wifi_event_ap_staconnected_t *)event_data;
         ESP_LOGI(TAG, "station " MACSTR " join, AID=%d",
                  MAC2STR(event->mac), event->aid);
-    } else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
+
+        if (connected_devices_count < EXAMPLE_MAX_STA_CONN) {
+            connected_devices_count += 1;
+        }
+        connected_devices_has_changed = true;
+    } 
+    
+    else if (event_id == WIFI_EVENT_AP_STADISCONNECTED) {
         wifi_event_ap_stadisconnected_t *event = (wifi_event_ap_stadisconnected_t *)event_data;
         ESP_LOGI(TAG, "station " MACSTR " leave, AID=%d",
                  MAC2STR(event->mac), event->aid);
+        if (connected_devices_count > 0) {
+            connected_devices_count -= 1;
+        }
+        connected_devices_has_changed = true;
     }
 }
 
@@ -87,6 +113,11 @@ static void wifi_init_softap(void)
 
     ESP_LOGI(TAG, "wifi_init_softap finished. SSID:'%s' password:'%s'",
              EXAMPLE_ESP_WIFI_SSID, EXAMPLE_ESP_WIFI_PASS);
+
+    strcpy(gcaptive_data.ipv4, ip_addr);
+    strcpy(gcaptive_data.ssid, EXAMPLE_ESP_WIFI_SSID);
+    strcpy(gcaptive_data.psswd, EXAMPLE_ESP_WIFI_PASS);
+    gcaptive_data.is_started = true;
 }
 
 // HTTP GET Handler
@@ -185,6 +216,14 @@ static void gcaptive_task(void* params) {
 
 
 esp_err_t gcaptive_create() {
+    memset(gcaptive_data.ssid, '\0', GCAPTIVE_SSID_SIZE);
+    memset(gcaptive_data.psswd, '\0', GCAPTIVE_PSSWD_SIZE);
+    memset(gcaptive_data.ipv4, '\0', GCAPTIVE_IPV4_SIZE);
+    gcaptive_data.is_started = false;
+
+    connected_devices_has_changed = false;
+    memset(connected_devices_data, 0, sizeof(connected_device_data_t) * EXAMPLE_MAX_STA_CONN);
+    connected_devices_count = 0;
 
     return ESP_OK;
 }
@@ -200,4 +239,32 @@ esp_err_t gcaptive_start() {
 esp_err_t gcaptive_stop() {
 
     return ESP_OK;
+}
+
+bool gcaptive_is_started() {
+    return gcaptive_data.is_started;
+}
+
+const char* gcaptive_get_ssid() {
+    return gcaptive_data.ssid;
+}
+
+const char* gcaptive_get_psswd() {
+    return gcaptive_data.psswd;
+}
+
+const char* gcaptive_get_ipv4_str() {
+    return gcaptive_data.ipv4;
+}
+
+bool gcaptive_has_connected_devices_changed() {
+    if (connected_devices_has_changed == true) {
+        connected_devices_has_changed = false; // mark
+        return true;
+    }
+    return false;
+}
+
+void gcaptive_get_connected_devices(uint8_t* devices_count) {
+    *devices_count = connected_devices_count;
 }

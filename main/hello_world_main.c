@@ -19,8 +19,8 @@
 
 #include "shtc3_sensor.h"
 #include "gindicator.h"
-#include "gcaptive.h"
 #include "spi_epd_7in5v2.h"
+#include "gframe.h"
 
 #define TOUCH_SENS_PIN GPIO_NUM_20
 
@@ -49,7 +49,7 @@ static void setup_epb() {
             epd7in5v2_fill_rect(i*5, i*10, 10 + i*10, i, false);
         }
 
-        epd7in5v2_draw_text(200, 100, 24, "Kicia krawcowa <3");
+        // epd7in5v2_draw_text(200, 100, 24, "Kicia krawcowa <3");
         epd7in5v2_stop_draw();
     }
     epd7in5v2_attempt_refresh(portMAX_DELAY);
@@ -87,14 +87,13 @@ static void setup_indicators() {
 }
 
 static void setup_gemeral() {
-        // ESP_ERROR_CHECK(nvs_flash_init());
-        // ESP_ERROR_CHECK(esp_netif_init());
-        // ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(nvs_flash_init());
+    ESP_ERROR_CHECK(esp_netif_init());
 }
 
-static void setup_connectivity() {
-    // gcaptive_create();
-    // gcaptive_start();
+static void setup_gframe() {
+        ESP_ERROR_CHECK(gframe_create());
+        ESP_ERROR_CHECK(gframe_start());
 }
 
 /* Refresh */
@@ -112,37 +111,20 @@ void app_main(void) {
     setup_gemeral();
     setup_ts();
     setup_epb();
+    setup_gframe();
     setup_indicators();
     setup_sensors();
-    setup_connectivity();
 
     refresh_sensors();
     int last_ts_counter = ts_counter;
-
-    int rot = 0;
 
     ESP_LOGI(TAG, "Start loop!");
     while(1) {
         if(last_ts_counter != ts_counter) {
             last_ts_counter = ts_counter;
             printf("GPIO Interrupt Triggered: %d!\n", ts_counter);
+            gframe_enque_shortclick();
         }
-        vTaskDelay(pdMS_TO_TICKS(500));
-
-        rot += 2;
-
-        // if(epd7in5v2_is_refreshed()) {
-        //     if(epd7in5v2_start_draw(portMAX_DELAY)) {
-        //         epd7in5v2_fill_color(true);
-
-        //         epd7in5v2_set_rotation(rot);
-
-        //         for(int i =0; i< 20; ++i) {
-        //             epd7in5v2_fill_rect(i*5, i*10, 10 + i*10, i, false);
-        //         }
-        //         epd7in5v2_stop_draw();
-        //     }
-        //     epd7in5v2_attempt_refresh(portMAX_DELAY);
-        // }
+        vTaskDelay(pdMS_TO_TICKS(50));
     }
 }

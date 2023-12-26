@@ -50,6 +50,7 @@
         "inttypes.h": "c",
         "ets_sys.h": "c",
         "sdkconfig.h": "c",
-        "epd_fonts.h": "c"
+        "epd_fonts.h": "c",
+        "spi_epd_7in5v2.h": "c"
     }
 }
