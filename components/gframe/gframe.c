@@ -10,6 +10,19 @@
 
 #include "gcaptive.h"
 #include "spi_epd_7in5v2.h"
+#include "bmp_loader.h"
+
+extern const char bmp_arrowdown_start[] asm("_binary_arrowdown_bmp_start");
+extern const char bmp_arrowdown_end[] asm("_binary_arrowdown_bmp_end");
+
+extern const char bmp_intro_start[] asm("_binary_intro_bmp_start");
+extern const char bmp_intro_end[] asm("_binary_intro_bmp_end");
+
+extern const char bmp_test_start[] asm("_binary_test_bmp_start");
+extern const char bmp_test_end[] asm("_binary_test_bmp_end");
+
+extern const char bmp_kicia_start[] asm("_binary_kicia_bmp_start");
+extern const char bmp_kicia_end[] asm("_binary_kicia_bmp_end");
 
 #define GFRAME_TASK_STACK_SIZE  (2048 * 2)
 #define GFRAME_TASK_PRIORITY      8
@@ -47,7 +60,9 @@ static void gframe_process_statemachine() {
         if (epd7in5v2_is_refreshed() == true) {
             if (epd7in5v2_start_draw(portMAX_DELAY) == true) {
                 epd7in5v2_fill_color(true);
-                epd7in5v2_draw_text(300, 240, 24, "Epapierowa ramka: witam!");
+                // epd7in5v2_draw_text(300, 240, 24, "Epapierowa ramka: witam!");
+                epd7in5v2_draw_image(0, 0, bmp_kicia_start, bmp_kicia_end);
+                // epd7in5v2_draw_image(0, 0, bmp_test_start, bmp_test_end);
                 epd7in5v2_stop_draw();
             }
             epd7in5v2_attempt_refresh(portMAX_DELAY);

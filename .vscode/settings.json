@@ -51,6 +51,15 @@
         "ets_sys.h": "c",
         "sdkconfig.h": "c",
         "epd_fonts.h": "c",
-        "spi_epd_7in5v2.h": "c"
+        "spi_epd_7in5v2.h": "c",
+        "bmp_loader.h": "c",
+        "*.tcc": "c",
+        "ratio": "c",
+        "system_error": "c",
+        "functional": "c",
+        "regex": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     }
 }

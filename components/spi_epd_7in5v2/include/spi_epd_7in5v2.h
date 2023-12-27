@@ -53,6 +53,8 @@ void epd7in5v2_set_pixel(const int32_t x, const int32_t y, const bool white);
 
 void epd7in5v2_fill_rect(const int32_t x, const int32_t y, const uint32_t width, const uint32_t height, const bool white);
 
+void epd7in5v2_draw_image(const int32_t x, const int32_t y, const char* image_binary_start, const char* image_binary_end);
+
 bool epd7in5v2_is_refreshed();
 
 /* Transfer drawn stuff onto display */

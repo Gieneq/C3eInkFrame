@@ -12,6 +12,7 @@
 #include <rom/ets_sys.h>
 
 #include "epd_fonts.h"
+#include "bmp_loader.h"
 
 #define EPD_FRAMEBUFFER_SIZE   ((EPD7IN5V2_WIDTH * EPD7IN5V2_HEIGHT) / 8)
 
@@ -30,7 +31,7 @@ typedef struct command_data_size_t {
 
 /* Commands and commands sets */
 static const command_data_size_t power_settings_data[] = {
-    {0x01, {0x17, 0x17, 0x3F, 0x3F, 0x11}, 5},    /* Power settings:
+    {0x01, {0x07, 0x17, 0x26, 0x26, 0x11}, 5},    /* Power settings:
                                                    * initial power, VGH&VGL, VSH, VSL, VSHR
                                                    */
     {0x82, {0x24}, 1},    /* VCOM DC Setting */
@@ -38,7 +39,7 @@ static const command_data_size_t power_settings_data[] = {
     {0x06, {0x27, 0x27, 0x2F, 0x17}, 4},          /* Booster settings */
 
 
-    {0x30, {0x06}, 1},                          /* OSC Setting: 2-0=100: N=4  ; 5-3=111: M=7  ;  3C=50Hz     3A=100HZ*/
+    //{0x30, {0x06}, 1},                          /* OSC Setting: 2-0=100: N=4  ; 5-3=111: M=7  ;  3C=50Hz     3A=100HZ*/
 
     {0x04, {}, 0},                          /* Power on */
 };
@@ -634,6 +635,55 @@ void epd7in5v2_fill_rect(const int32_t x, const int32_t y, const uint32_t width,
             epd7in5v2_set_pixel(x + ix, y + iy, white);
         }
     }
+}
+
+void epd7in5v2_draw_image(const int32_t x, const int32_t y, const char* image_binary_start, const char* image_binary_end) {
+    /* Draw monochrome image 32bit aligned */
+    if ((image_binary_start == NULL) || (image_binary_end == NULL)) {
+        return;
+    }
+
+    bmp_file_reader_t bmp_reader;
+    if (bmp_loader_init(image_binary_start, image_binary_end, &bmp_reader) != ESP_OK) {
+        ESP_LOGE(TAG, "Failed to init BMP reader");
+        return;
+    }
+
+    // for (int32_t iy=0; iy<bmp_reader.image.height; ++iy) { 
+    //     for (int32_t ix=0; ix<bmp_reader.image.width; ++ix) {
+    //         bool is_white = (((iy % 2) == 0)) ? true : false;
+    //         if (ix < 2) {
+    //             is_white = false;
+    //         }
+    //         epd7in5v2_set_pixel(x + ix, y + iy, is_white);
+    //     }
+    // }
+
+    uint32_t pixel_index = 0;
+    uint32_t iy = 0;          /* From 0 to bmp_reader.image.height */
+    uint32_t ix = 0;          /* From 0 to bmp_reader.image.width  */
+
+    while (bmp_loader_read_if_any(&bmp_reader) == true) {
+        /* Has something in reader chunk */
+        for (uint32_t chunk_byte_idx=0; chunk_byte_idx<bmp_reader.chunk_size; ++chunk_byte_idx) {
+            const uint32_t chunk_byte = bmp_reader.chunk[chunk_byte_idx];
+            for (int32_t byte_idx=7; byte_idx>=0; --byte_idx) {
+
+                iy = bmp_reader.image.height - (pixel_index / bmp_reader.image.aligned_width) - 1;
+                ix = pixel_index % bmp_reader.image.aligned_width;
+
+                if (ix < bmp_reader.image.width) {
+                    /* Here valid image data */
+                    const bool is_white = (chunk_byte & (1<<byte_idx)) > 0 ? true : false;
+                    epd7in5v2_set_pixel(x + ix, y + iy, is_white);
+                }
+
+                ++pixel_index;
+            }
+        }
+        // ESP_LOGW(TAG, "Not implemented - got some iamge data [%u] at %lu", bmp_reader.chunk_size, bmp_reader.recent_offset);
+    }
+    ESP_LOGI(TAG, ">> Drawing image [%lux%lu] OK! Data size=%lu", bmp_reader.image.width, bmp_reader.image.height, bmp_reader.image.data_size);
 }
 
 bool epd7in5v2_attempt_refresh(TickType_t bus_access_timeout) {
