@@ -83,12 +83,13 @@ static void setup_sensors() {
 
 static void setup_indicators() {
     gindicator_init();
-    gindicator_set_rgb(0, 0, 0);
+    gindicator_set_rgb(0, 20, 0);
 }
 
 static void setup_gemeral() {
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
+    ESP_ERROR_CHECK(esp_event_loop_create_default());
 }
 
 static void setup_gframe() {
@@ -122,8 +123,11 @@ void app_main(void) {
     while(1) {
         if(last_ts_counter != ts_counter) {
             last_ts_counter = ts_counter;
+            gindicator_set_rgb(110, 0, 250);
             printf("GPIO Interrupt Triggered: %d!\n", ts_counter);
             gframe_enque_shortclick();
+            vTaskDelay(pdMS_TO_TICKS(500));
+            gindicator_set_rgb(0, 20, 0);
         }
         vTaskDelay(pdMS_TO_TICKS(50));
     }

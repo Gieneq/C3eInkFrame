@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>E-Paper Frame Settings</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue-grey.css">
+  <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="w3-theme-l5">
+
+<!-- Navbar -->
+<div class="w3-top">
+ <div class="w3-bar w3-theme-d2 w3-left-align w3-large">
+  <a class="w3-bar-item w3-button w3-hide-medium w3-hide-large w3-right w3-padding-large w3-hover-white w3-large w3-theme-d2" href="javascript:void(0);" onclick="openNav()"><i class="fa fa-bars"></i></a>
+  <a href="#" class="w3-bar-item w3-button w3-padding-large w3-theme-d4"><i class="fa fa-home w3-margin-right"></i>Settings</a>
+  <a href="#" class="w3-bar-item w3-button w3-hide-small w3-padding-large w3-hover-white" title="News"><i class="fa fa-globe"></i></a>
+  <a href="#" class="w3-bar-item w3-button w3-hide-small w3-padding-large w3-hover-white" title="Account Settings"><i class="fa fa-user"></i></a>
+  <a href="#" class="w3-bar-item w3-button w3-hide-small w3-padding-large w3-hover-white" title="Messages"><i class="fa fa-envelope"></i></a>
+  <div class="w3-dropdown-hover w3-hide-small">
+    <button class="w3-button w3-padding-large" title="Notifications"><i class="fa fa-bell"></i><span class="w3-badge w3-right w3-small w3-green">3</span></button>     
+    <div class="w3-dropdown-content w3-card-4 w3-bar-block" style="width:300px">
+      <a href="#" class="w3-bar-item w3-button">One new friend request</a>
+      <a href="#" class="w3-bar-item w3-button">John Doe posted on your wall</a>
+      <a href="#" class="w3-bar-item w3-button">Jane likes your post</a>
+    </div>
+  </div>
+  <a href="#" class="w3-bar-item w3-button w3-hide-small w3-right w3-padding-large w3-hover-white" title="My Account">
+    <img src="favico.ico" class="w3-circle" style="height:23px;width:23px" alt="Avatar">
+  </a>
+ </div>
+</div>
+
+<!-- Navbar on small screens -->
+<div id="navDemo" class="w3-bar-block w3-theme-d2 w3-hide w3-hide-large w3-hide-medium w3-large">
+  <a href="#" class="w3-bar-item w3-button w3-padding-large">Link 1</a>
+  <a href="#" class="w3-bar-item w3-button w3-padding-large">Link 2</a>
+  <a href="#" class="w3-bar-item w3-button w3-padding-large">Link 3</a>
+  <a href="#" class="w3-bar-item w3-button w3-padding-large">My Profile</a>
+</div>
+
+<!-- Page Container -->
+<div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">   
+  
+  <!-- Alert Box -->
+  <div class="w3-container w3-display-container w3-round w3-theme-l4 w3-border w3-theme-border w3-margin-bottom w3-hide-small">
+    <span onclick="this.parentElement.style.display='none'" class="w3-button w3-theme-l3 w3-display-bottomright">
+      <i class="fa fa-remove"></i>
+    </span>
+    <p><strong>Notification</strong></p>
+    <p class="notif_msg_1" style="display: none;">Image was uploaded</p>
+    <p class="notif_msg_2" style="display: none;">Settings were uploaded</p>
+    <p class="notif_msg_3">Error occured</p>
+  </div>
+
+  <!-- The Grid -->
+  <div class="w3-row">
+    <!-- Left Column -->
+    <div class="w3-col m4">
+      <!-- Profile -->
+      <div class="w3-card w3-round w3-white">
+        <div class="w3-container">
+         <h4 class="w3-center">System</h4>
+         <p class="w3-center"><img src="esp32c3.png" style="height:106px;width:106px" alt="Avatar"></p>
+         <hr>
+         <p><i class="fa fa-pencil fa-fw w3-margin-right w3-text-theme"></i> IDF 5.1 </p>
+         <p><i class="fa fa-pencil fa-fw w3-margin-right w3-text-theme"></i> 4MB FLASH </p>
+         <p><i class="fa fa-pencil fa-fw w3-margin-right w3-text-theme"></i> ESP32C3</p>
+         <p><i class="fa fa-pencil fa-fw w3-margin-right w3-text-theme"></i> SomeSSID</p>
+         <p><i class="fa fa-pencil fa-fw w3-margin-right w3-text-theme"></i> AP: 192.168.0.1</p>
+        </div>
+      </div>
+      <br>
+
+      <div class="w3-card w3-round w3-white w3-center">
+        <div class="w3-container">
+          <p><strong>RAM usage</strong></p>
+          <div class="w3-light-grey w3-small">
+            <div class="w3-container w3-center w3-teal" style="width:10%">10%</div>
+          </div>
+          <p><strong>FLASH usage</strong></p>
+          <div class="w3-light-grey w3-small">
+            <div class="w3-container w3-center w3-teal" style="width:30%">30%</div>
+          </div>
+          <p><strong>Uptime</strong></p>
+          <p>15h 32min</p>
+          <p><button class="w3-button w3-block w3-theme-l4">Reboot</button></p>
+        </div>
+      </div>
+      <br>
+    
+    <!-- End Left Column -->
+    </div>
+    
+    <!-- Middle Column -->
+
+    <div class="w3-col m8">
+
+      <div class="w3-card w3-round w3-white w3-margin-left">
+        <div class="w3-container">
+          <h3 class="w3-opacity">Station settings</h3>
+          <h6 class="w3-opacity">SSID</h6>
+          <p contenteditable="true" class="w3-border w3-padding">Some SSID</p>
+          <h6 class="w3-opacity">Password</h6>
+          <p contenteditable="true" class="w3-border w3-padding">Some PSSWD</p>
+          <p><button class="w3-button w3-theme">Save & Reboot</button></p>
+        </div>
+      </div>
+      <br>
+
+      <div class="w3-card w3-round w3-white w3-margin-left">
+        <div class="w3-container">
+          <h3 class="w3-opacity">Portal settings</h3>
+          <h6 class="w3-opacity">SSID</h6>
+          <p contenteditable="true" class="w3-border w3-padding">Some SSID</p>
+          <h6 class="w3-opacity">Password</h6>
+          <p contenteditable="true" class="w3-border w3-padding">Some PSSWD</p>
+          <p><button class="w3-button w3-theme">Save & Reboot</button></p>
+        </div>
+      </div>
+      <br>
+
+      <div class="w3-card w3-round w3-white w3-margin-left">
+        <div class="w3-container">
+          <h3 class="w3-opacity">Dithering uploader</h3>
+
+          <!-- Select & Rotate -->
+          <div class="w3-row">
+            <div class="w3-col m4 w3-center">
+              <h6 class="w3-opacity">Select image to be dithered</h6>
+              <p><button class="w3-button w3-theme">Select</button></p>
+            </div>
+            <div class="w3-col m4 w3-center">
+              <h6 class="w3-opacity">Layout</h6>
+              <img id="layout-image" class="w3-theme" src="gframe_icon.png" alt="Rotating Image" height="70px">
+            </div>
+            <div class="w3-col m4 w3-center">
+              <h6 class="w3-opacity">Rotate image frame</h6>
+              <p><button class="w3-button w3-theme">Rotate</button></p>
+            </div>
+          </div>
+          <hr>
+
+          <!-- Preview -->
+          <canvas style="border: solid; width: 100%;"></canvas>
+
+          <input type="range" class="w3-input" id="scale_slider" min="0" max="100" value="50">
+          <span><strong>Scale: </strong></span> <span id="scale_value"><strong>1.00</strong></span>
+  
+          <input type="range" class="w3-input" id="gamma_slider" min="0" max="100" value="50">
+          <span><strong>Gamma: </strong></span> <span id="gamma_value"><strong>1.00</strong></span>
+          <hr>
+
+          <!-- Upload & Download -->
+          <div class="w3-row">
+            <div class="w3-col m6 w3-center">
+              <h6 class="w3-opacity">Upload dithered image to the E-paper Frame</h6>
+              <p><button class="w3-button w3-theme">Upload</button></p>
+            </div>
+            <div class="w3-col m6 w3-center">
+              <h6 class="w3-opacity">Download dithered image to device</h6>
+              <p><button class="w3-button w3-theme">Download</button></p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+      <br>
+      
+    <!-- End Middle Column -->
+    </div>
+    
+  <!-- End Grid -->
+  </div>
+  
+<!-- End Page Container -->
+</div>
+<br>
+
+<!-- Footer -->
+<footer class="w3-container w3-theme-d3 w3-padding-16">
+  <h5>Footer</h5>
+</footer>
+
+<footer class="w3-container w3-theme-d5">
+  <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" target="_blank">w3.css</a></p>
+</footer>
+ 
+<script>
+// Accordion
+function myFunction(id) {
+  var x = document.getElementById(id);
+  if (x.className.indexOf("w3-show") == -1) {
+    x.className += " w3-show";
+    x.previousElementSibling.className += " w3-theme-d1";
+  } else { 
+    x.className = x.className.replace("w3-show", "");
+    x.previousElementSibling.className = 
+    x.previousElementSibling.className.replace(" w3-theme-d1", "");
+  }
+}
+
+// Used to toggle the menu on smaller screens when clicking on the menu button
+function openNav() {
+  var x = document.getElementById("navDemo");
+  if (x.className.indexOf("w3-show") == -1) {
+    x.className += " w3-show";
+  } else { 
+    x.className = x.className.replace(" w3-show", "");
+  }
+}
+</script>
+
+</body>
+</html> 

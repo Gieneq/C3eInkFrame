@@ -188,13 +188,13 @@ static void gcaptive_task(void* params) {
 
 
     // Initialize networking stack
-    ESP_ERROR_CHECK(esp_netif_init());
+    // ESP_ERROR_CHECK(esp_netif_init());
 
     // Create default event loop needed by the  main app
-    ESP_ERROR_CHECK(esp_event_loop_create_default());
+    // ESP_ERROR_CHECK(esp_event_loop_create_default());
 
     // Initialize NVS needed by Wi-Fi
-    ESP_ERROR_CHECK(nvs_flash_init());
+    // ESP_ERROR_CHECK(nvs_flash_init());
 
     // Initialize Wi-Fi including netif with default config
     esp_netif_create_default_wifi_ap();
