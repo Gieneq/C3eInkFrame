@@ -4,9 +4,8 @@
   <title>E-Paper Frame Settings</title>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
-  <link rel="stylesheet" href="https://www.w3schools.com/lib/w3-theme-blue-grey.css">
-  <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'>
+  <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <!-- <link rel='stylesheet' href='https://fonts.googleapis.com/css?family=Open+Sans'> -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
   <link rel="stylesheet" href="styles.css">
 </head>
@@ -29,7 +28,7 @@
     </div>
   </div>
   <a href="#" class="w3-bar-item w3-button w3-hide-small w3-right w3-padding-large w3-hover-white" title="My Account">
-    <img src="favico.ico" class="w3-circle" style="height:23px;width:23px" alt="Avatar">
+    <img src="favicon.ico" style="height:36px;width:36px" alt="Avatar">
   </a>
  </div>
 </div>
@@ -46,7 +45,7 @@
 <div class="w3-container w3-content" style="max-width:1400px;margin-top:80px">   
   
   <!-- Alert Box -->
-  <div class="w3-container w3-display-container w3-round w3-theme-l4 w3-border w3-theme-border w3-margin-bottom w3-hide-small">
+  <div class="w3-container w3-display-container w3-round w3-theme-l4 w3-border w3-theme-border w3-margin-bottom w3-hide-small gq-notification-invisibile">
     <span onclick="this.parentElement.style.display='none'" class="w3-button w3-theme-l3 w3-display-bottomright">
       <i class="fa fa-remove"></i>
     </span>
@@ -64,7 +63,7 @@
       <div class="w3-card w3-round w3-white">
         <div class="w3-container">
          <h4 class="w3-center">System</h4>
-         <p class="w3-center"><img src="esp32c3.png" style="height:106px;width:106px" alt="Avatar"></p>
+         <p class="w3-center"><img src="esp32c3.png" style="height:106px;width:106px" alt="ESP32"></p>
          <hr>
          <p><i class="fa fa-pencil fa-fw w3-margin-right w3-text-theme"></i> IDF 5.1 </p>
          <p><i class="fa fa-pencil fa-fw w3-margin-right w3-text-theme"></i> 4MB FLASH </p>
@@ -123,7 +122,7 @@
       </div>
       <br>
 
-      <div class="w3-card w3-round w3-white w3-margin-left">
+      <div class="w3-card w3-round w3-white w3-margin-left gq-full-view">
         <div class="w3-container">
           <h3 class="w3-opacity">Dithering uploader</h3>
 
@@ -131,21 +130,28 @@
           <div class="w3-row">
             <div class="w3-col m4 w3-center">
               <h6 class="w3-opacity">Select image to be dithered</h6>
-              <p><button class="w3-button w3-theme">Select</button></p>
+              <input type="file" id="image_input" style="display: none;">
+              <p><button id="fileInputImage" class="w3-button w3-theme">Select</button></p>
             </div>
-            <div class="w3-col m4 w3-center">
+            <div class="w3-col m4 w3-center w3-border-left">
               <h6 class="w3-opacity">Layout</h6>
-              <img id="layout-image" class="w3-theme" src="gframe_icon.png" alt="Rotating Image" height="70px">
+              <img id="layout_image" class="w3-theme" src="gframe_icon.png" alt="Rotating Image" height="70px">
             </div>
-            <div class="w3-col m4 w3-center">
+            <div class="w3-col m4 w3-center w3-border-left">
               <h6 class="w3-opacity">Rotate image frame</h6>
-              <p><button class="w3-button w3-theme">Rotate</button></p>
+              <p><button id="layout_rotate_btn" class="w3-button w3-theme">Rotate</button></p>
             </div>
           </div>
           <hr>
 
           <!-- Preview -->
-          <canvas style="border: solid; width: 100%;"></canvas>
+
+          <div class="w3-container w3-display-container w3-theme-l4 w3-margin-bottom">
+            <span id="toggle_preview_btn" class="w3-button w3-theme-l2 w3-display-bottomright">
+              Original
+            </span>
+            <canvas id="preview_canvas" style="border: solid; width: 100%;"></canvas>
+          </div>
 
           <input type="range" class="w3-input" id="scale_slider" min="0" max="100" value="50">
           <span><strong>Scale: </strong></span> <span id="scale_value"><strong>1.00</strong></span>
@@ -158,13 +164,14 @@
           <div class="w3-row">
             <div class="w3-col m6 w3-center">
               <h6 class="w3-opacity">Upload dithered image to the E-paper Frame</h6>
-              <p><button class="w3-button w3-theme">Upload</button></p>
+              <p><button onclick="upload()" class="w3-button w3-theme">Upload</button></p>
             </div>
-            <div class="w3-col m6 w3-center">
+            <div class="w3-col m6 w3-center w3-border-left">
               <h6 class="w3-opacity">Download dithered image to device</h6>
-              <p><button class="w3-button w3-theme">Download</button></p>
+              <p><button onclick="download()" class="w3-button w3-theme">Download</button></p>
             </div>
           </div>
+          <br>
 
         </div>
       </div>
@@ -188,31 +195,7 @@
 <footer class="w3-container w3-theme-d5">
   <p>Powered by <a href="https://www.w3schools.com/w3css/default.asp" target="_blank">w3.css</a></p>
 </footer>
- 
-<script>
-// Accordion
-function myFunction(id) {
-  var x = document.getElementById(id);
-  if (x.className.indexOf("w3-show") == -1) {
-    x.className += " w3-show";
-    x.previousElementSibling.className += " w3-theme-d1";
-  } else { 
-    x.className = x.className.replace("w3-show", "");
-    x.previousElementSibling.className = 
-    x.previousElementSibling.className.replace(" w3-theme-d1", "");
-  }
-}
 
-// Used to toggle the menu on smaller screens when clicking on the menu button
-function openNav() {
-  var x = document.getElementById("navDemo");
-  if (x.className.indexOf("w3-show") == -1) {
-    x.className += " w3-show";
-  } else { 
-    x.className = x.className.replace(" w3-show", "");
-  }
-}
-</script>
-
+<script src="scripts.js"></script>
 </body>
 </html> 
