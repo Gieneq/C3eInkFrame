@@ -1,6 +1,7 @@
 #include "gcaptive.h"
 
 #include <stdio.h>
+#include <string.h>
 
 #include <freertos/FreeRTOS.h>
 #include <freertos/task.h>
@@ -14,6 +15,10 @@
 #include <esp_http_server.h>
 #include <esp_wifi.h>
 #include <sdkconfig.h>
+#include <sys/param.h>
+#include <sys/unistd.h>
+#include <sys/stat.h>
+#include <dirent.h>
 
 // #include "dns_server.h"
 #include <sys/param.h>
@@ -251,31 +256,87 @@ static const httpd_uri_t styles_css = {
     .handler = styles_css_get_handler
 };
 
-
+static void delete_stored_image_bmp_if_possible(const char* filename, const char* filepath, struct stat* file_stat) {
+    if (stat(filepath, file_stat) == -1) {
+        ESP_LOGI(TAG, "File does not exist : %s", filename);
+        return;
+    }
+    unlink(filepath);
+    ESP_LOGI(TAG, "File: %s deleted!", filename);
+}
 
 /* POST upload_bmp */
-
-static esp_err_t upload_bmp_post_handler(httpd_req_t *req)
-{    
-    int ret, remaining = req->content_len;
+static esp_err_t upload_bmp_post_handler(httpd_req_t *req) {
+    int received;
+    int remaining = req->content_len;
     ESP_LOGI(TAG, "Receiving %d B of BMP image", req->content_len);
 
+    const char* filename = "image.bmp";
+    const char* filepath = "/data/image.bmp";
+    FILE *fd = NULL;
+    struct stat file_stat;
+
+    /* If image already stored delete it */
+    delete_stored_image_bmp_if_possible(filename, filepath, &file_stat);
+
+
+    /* File cannot be larger than a limit */
+
+    fd = fopen(filepath, "w");
+    if (!fd) {
+        ESP_LOGE(TAG, "Failed to create file : %s", filepath);
+        /* Respond with 500 Internal Server Error */
+        httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to create file");
+        return ESP_FAIL;
+    }
+    ESP_LOGI(TAG, "Receiving file : %s...", filename);
+
+      /* Content length of the request gives
+     * the size of the file being uploaded */
+    remaining = req->content_len;
+
     while (remaining > 0) {
-        /* Read the data for the request */
-        if ((ret = httpd_req_recv(req, upload_bmp_buff,
-                        MIN(remaining, sizeof(upload_bmp_buff)))) <= 0) {
-            if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
-                /* Retry receiving if timeout occurred */
+
+        ESP_LOGI(TAG, "Remaining size : %d", remaining);
+        /* Receive the file part by part into a buffer */
+        if ((received = httpd_req_recv(req, upload_bmp_buff, MIN(remaining, UPLOAD_BUFFER_SIZE))) <= 0) {
+            if (received == HTTPD_SOCK_ERR_TIMEOUT) {
+                /* Retry if timeout occurred */
                 continue;
             }
+
+            /* In case of unrecoverable error,
+             * close and delete the unfinished file*/
+            fclose(fd);
+            unlink(filepath);
+
+            ESP_LOGE(TAG, "File reception failed!");
+            /* Respond with 500 Internal Server Error */
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive file");
             return ESP_FAIL;
         }
 
-        /* Send back the same data */
-        // httpd_resp_send_chunk(req, upload_bmp_buff, ret);
-        remaining -= ret;
+        /* Write buffer content to file on storage */
+        if (received && (received != fwrite(upload_bmp_buff, 1, received, fd))) {
+            /* Couldn't write everything to file!
+             * Storage may be full? */
+            fclose(fd);
+            unlink(filepath);
+
+            ESP_LOGE(TAG, "File write failed!");
+            /* Respond with 500 Internal Server Error */
+            httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to write file to storage");
+            return ESP_FAIL;
+        }
+
+        /* Keep track of remaining size of
+         * the file left to be uploaded */
+        remaining -= received;
     }
-    ESP_LOGI(TAG, "Receiving DONE!");
+
+    /* Close file upon upload completion */
+    fclose(fd);
+    ESP_LOGI(TAG, "File reception complete");
 
     /* Respond because needed in promise */
     const char RESPONSE_OK[] = "{\"status\":200}\n";
@@ -290,7 +351,6 @@ static const httpd_uri_t upload_bmp = {
     .handler   = upload_bmp_post_handler,
     .user_ctx  = NULL
 };
-
 
 static httpd_handle_t start_webserver(void)
 {
