@@ -128,16 +128,20 @@
 
           <!-- Select & Rotate -->
           <div class="w3-row">
-            <div class="w3-col m4 w3-center">
+            <div class="w3-col m3 w3-center">
               <h6 class="w3-opacity">Select image to be dithered</h6>
               <input type="file" id="image_input" style="display: none;">
               <p><button id="fileInputImage" class="w3-button w3-theme">Select</button></p>
             </div>
-            <div class="w3-col m4 w3-center w3-border-left">
+            <div class="w3-col m3 w3-center w3-border-left">
+              <h6 class="w3-opacity">Toggle preview</h6>
+              <p><button id="toggle_preview_btn" class="w3-button w3-theme" onclick="toggle_preview()">Original</button></p>
+            </div>
+            <div class="w3-col m3 w3-center w3-border-left">
               <h6 class="w3-opacity">Layout</h6>
               <img id="layout_image" class="w3-theme" src="gframe_icon.png" alt="Rotating Image" height="70px">
             </div>
-            <div class="w3-col m4 w3-center w3-border-left">
+            <div class="w3-col m3 w3-center w3-border-left">
               <h6 class="w3-opacity">Rotate image frame</h6>
               <p><button id="layout_rotate_btn" class="w3-button w3-theme">Rotate</button></p>
             </div>
@@ -145,13 +149,7 @@
           <hr>
 
           <!-- Preview -->
-
-          <div class="w3-container w3-display-container w3-theme-l4 w3-margin-bottom">
-            <span id="toggle_preview_btn" class="w3-button w3-theme-l2 w3-display-bottomright">
-              Original
-            </span>
-            <canvas id="preview_canvas" style="border: solid; width: 100%;"></canvas>
-          </div>
+          <canvas id="preview_canvas" class="w3-border w3-border-theme"></canvas>
 
           <input type="range" class="w3-input" id="scale_slider" min="0" max="100" value="50">
           <span><strong>Scale: </strong></span> <span id="scale_value"><strong>1.00</strong></span>

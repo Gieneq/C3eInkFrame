@@ -232,13 +232,13 @@ preview_canvas.addEventListener('mouseup', function() {
   dragging.is_dragging = false;
 });
 
-preview_canvas.addEventListener('mouseover', function() {
-  toggle_preview_btn.style.opacity = 1;
-});
+// preview_canvas.addEventListener('mouseover', function() {
+//   toggle_preview_btn.style.opacity = 1;
+// });
 
-preview_canvas.addEventListener('mouseout', function() {
-  toggle_preview_btn.style.opacity = 0;
-});
+// preview_canvas.addEventListener('mouseout', function() {
+//   toggle_preview_btn.style.opacity = 0;
+// });
 
 layout_rotate_btn.addEventListener('click', function() {
 

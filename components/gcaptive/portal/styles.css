@@ -344,11 +344,13 @@ canvas:hover {
 }
 
 #preview_canvas {
-    position: relative;
-    max-height: 600px;
-    margin-bottom: 8px;
-    border-radius: 4px;
-    box-shadow: 0 0 5px rgba(0, 0, 0, 0.7);
+    /* position: relative; */
+    width: 100%;
+    /* max-height: 600px; */
+    /* margin-bottom: 8px; */
+    /* border-radius: 4px; */
+    /* border: solid; */
+    /* box-shadow: 0 0 5px rgba(0, 0, 0, 0.7); */
 }
 
 .right-corner-button {
