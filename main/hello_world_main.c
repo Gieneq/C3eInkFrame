@@ -21,6 +21,7 @@
 #include "gindicator.h"
 #include "spi_epd_7in5v2.h"
 #include "gframe.h"
+#include "gstorage.h"
 
 #define TOUCH_SENS_PIN GPIO_NUM_20
 
@@ -86,10 +87,11 @@ static void setup_indicators() {
     gindicator_set_rgb(0, 0, 0);
 }
 
-static void setup_gemeral() {
+static void setup_general() {
     ESP_ERROR_CHECK(nvs_flash_init());
     ESP_ERROR_CHECK(esp_netif_init());
     ESP_ERROR_CHECK(esp_event_loop_create_default());
+    ESP_ERROR_CHECK(gstorage_mount(GSTORAGE_BASE_PATH));
 }
 
 static void setup_gframe() {
@@ -109,7 +111,7 @@ static void refresh_sensors() {
 }
 
 void app_main(void) {
-    setup_gemeral();
+    setup_general();
     setup_ts();
     setup_epb();
     setup_gframe();

@@ -61,6 +61,11 @@
         "tuple": "c",
         "type_traits": "c",
         "utility": "c",
-        "endpoints.h": "c"
+        "endpoints.h": "c",
+        "gstorage.h": "c",
+        "esp_spiffs.h": "c",
+        "gframe.h": "c",
+        "esp_vfs_fat.h": "c",
+        "string.h": "c"
     }
 }

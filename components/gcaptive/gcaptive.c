@@ -29,6 +29,7 @@
 
 #include "esp_http_server.h"
 // #include "dns_server.h"
+#include "gstorage.h"
 
 #define EXAMPLE_ESP_WIFI_SSID "GCaptiveSSID"
 #define EXAMPLE_ESP_WIFI_PASS "raspberry"

@@ -11,6 +11,7 @@
 #include "gcaptive.h"
 #include "spi_epd_7in5v2.h"
 #include "bmp_loader.h"
+#include "gstorage.h"
 
 extern const char bmp_arrowdown_start[] asm("_binary_arrowdown_bmp_start");
 extern const char bmp_arrowdown_end[] asm("_binary_arrowdown_bmp_end");
