@@ -15,7 +15,7 @@
 #include <esp_wifi.h>
 #include <sdkconfig.h>
 
-#include "dns_server.h"
+// #include "dns_server.h"
 #include <sys/param.h>
 
 #include "esp_event.h"
@@ -28,15 +28,36 @@
 #include "lwip/inet.h"
 
 #include "esp_http_server.h"
-#include "dns_server.h"
+// #include "dns_server.h"
 
 #define EXAMPLE_ESP_WIFI_SSID "GCaptiveSSID"
 #define EXAMPLE_ESP_WIFI_PASS "raspberry"
 #define EXAMPLE_MAX_STA_CONN 2
 #define EXAMPLE_MAX_SOCKETS  3
 
-extern const char root_start[] asm("_binary_root_html_start");
-extern const char root_end[] asm("_binary_root_html_end");
+static httpd_handle_t server = NULL;
+static bool server_is_running = false;
+
+extern const char esp32c3_png_start[] asm("_binary_esp32c3_png_start");
+extern const char esp32c3_png_end[] asm("_binary_esp32c3_png_end");
+
+extern const char favicon_ico_start[] asm("_binary_favicon_ico_start");
+extern const char favicon_ico_end[] asm("_binary_favicon_ico_end");
+
+extern const char gframe_icon_png_start[] asm("_binary_gframe_icon_png_start");
+extern const char gframe_icon_png_end[] asm("_binary_gframe_icon_png_end");
+
+extern const char index_html_start[] asm("_binary_index_html_start");
+extern const char index_html_end[] asm("_binary_index_html_end");
+
+extern const char scripts_js_start[] asm("_binary_scripts_js_start");
+extern const char scripts_js_end[] asm("_binary_scripts_js_end");
+
+extern const char styles_css_start[] asm("_binary_styles_css_start");
+extern const char styles_css_end[] asm("_binary_styles_css_end");
+
+#define UPLOAD_BUFFER_SIZE  (1024 * 8)
+static char upload_bmp_buff[UPLOAD_BUFFER_SIZE];
 
 #define GCAPTIVE_SSID_SIZE (64)
 #define GCAPTIVE_PSSWD_SIZE (64)
@@ -120,27 +141,14 @@ static void wifi_init_softap(void)
     gcaptive_data.is_started = true;
 }
 
-// HTTP GET Handler
-static esp_err_t root_get_handler(httpd_req_t *req)
-{
-    const uint32_t root_len = root_end - root_start;
 
-    ESP_LOGI(TAG, "Serve root");
-    httpd_resp_set_type(req, "text/html");
-    httpd_resp_send(req, root_start, root_len);
+/****************************************
+ *                                      *
+ *              ENDPOINTS               *
+ *                                      *
+ * **************************************/
 
-    return ESP_OK;
-}
-
-static const httpd_uri_t root = {
-    .uri = "/",
-    .method = HTTP_GET,
-    .handler = root_get_handler
-};
-
-// HTTP Error (404) Handler - Redirects all requests to the root page
-esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
-{
+esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err) {
     // Set status
     httpd_resp_set_status(req, "302 Temporary Redirect");
     // Redirect to the "/" root directory
@@ -152,9 +160,139 @@ esp_err_t http_404_error_handler(httpd_req_t *req, httpd_err_code_t err)
     return ESP_OK;
 }
 
+/* GET esp32c3.png */
+static esp_err_t esp32c3_png_get_handler(httpd_req_t *req) {
+    const uint32_t esp32c3_png_len = esp32c3_png_end - esp32c3_png_start;
+    httpd_resp_set_type(req, "image/png");
+    httpd_resp_send(req, esp32c3_png_start, esp32c3_png_len);
+    ESP_LOGI(TAG, "Serve esp32c3.png");
+    return ESP_OK;
+}
+
+static const httpd_uri_t esp32c3_png = {
+    .uri = "/esp32c3.png",
+    .method = HTTP_GET,
+    .handler = esp32c3_png_get_handler
+};
+
+/* GET favicon.ico */
+static esp_err_t favicon_ico_get_handler(httpd_req_t *req) {
+    const uint32_t favicon_ico_len = favicon_ico_end - favicon_ico_start;
+    httpd_resp_set_type(req, "image/x-icon");
+    httpd_resp_send(req, favicon_ico_start, favicon_ico_len);
+    ESP_LOGI(TAG, "Serve favicon.ico");
+    return ESP_OK;
+}
+
+static const httpd_uri_t favicon_ico = {
+    .uri = "/favicon.ico",
+    .method = HTTP_GET,
+    .handler = favicon_ico_get_handler
+};
+
+/* GET gframe_icon.png */
+static esp_err_t gframe_icon_png_get_handler(httpd_req_t *req) {
+    const uint32_t gframe_icon_png_len = gframe_icon_png_end - gframe_icon_png_start;
+    httpd_resp_set_type(req, "image/png");
+    httpd_resp_send(req, gframe_icon_png_start, gframe_icon_png_len);
+    ESP_LOGI(TAG, "Serve gframe_icon.png");
+    return ESP_OK;
+}
+
+static const httpd_uri_t gframe_icon_png = {
+    .uri = "/gframe_icon.png",
+    .method = HTTP_GET,
+    .handler = gframe_icon_png_get_handler
+};
+
+/* GET index.html */
+static esp_err_t index_html_get_handler(httpd_req_t *req) {
+    const uint32_t index_html_len = index_html_end - index_html_start;
+    httpd_resp_set_type(req, "text/html");
+    httpd_resp_send(req, index_html_start, index_html_len);
+    ESP_LOGI(TAG, "Serve index.html");
+    return ESP_OK;
+}
+
+static const httpd_uri_t index_html = {
+    .uri = "/",
+    .method = HTTP_GET,
+    .handler = index_html_get_handler
+};
+
+/* GET scripts.js */
+static esp_err_t scripts_js_get_handler(httpd_req_t *req) {
+    const uint32_t scripts_js_len = scripts_js_end - scripts_js_start;
+    httpd_resp_set_type(req, "text/javascript");
+    httpd_resp_send(req, scripts_js_start, scripts_js_len);
+    ESP_LOGI(TAG, "Serve scripts.js");
+    return ESP_OK;
+}
+
+static const httpd_uri_t scripts_js = {
+    .uri = "/scripts.js",
+    .method = HTTP_GET,
+    .handler = scripts_js_get_handler
+};
+
+/* GET styles.css */
+static esp_err_t styles_css_get_handler(httpd_req_t *req) {
+    const uint32_t styles_css_len = styles_css_end - styles_css_start;
+    httpd_resp_set_type(req, "text/css");
+    httpd_resp_send(req, styles_css_start, styles_css_len);
+    ESP_LOGI(TAG, "Serve styles.css");
+    return ESP_OK;
+}
+
+static const httpd_uri_t styles_css = {
+    .uri = "/styles.css",
+    .method = HTTP_GET,
+    .handler = styles_css_get_handler
+};
+
+
+
+/* POST upload_bmp */
+
+static esp_err_t upload_bmp_post_handler(httpd_req_t *req)
+{    
+    int ret, remaining = req->content_len;
+    ESP_LOGI(TAG, "Receiving %d B of BMP image", req->content_len);
+
+    while (remaining > 0) {
+        /* Read the data for the request */
+        if ((ret = httpd_req_recv(req, upload_bmp_buff,
+                        MIN(remaining, sizeof(upload_bmp_buff)))) <= 0) {
+            if (ret == HTTPD_SOCK_ERR_TIMEOUT) {
+                /* Retry receiving if timeout occurred */
+                continue;
+            }
+            return ESP_FAIL;
+        }
+
+        /* Send back the same data */
+        // httpd_resp_send_chunk(req, upload_bmp_buff, ret);
+        remaining -= ret;
+    }
+    ESP_LOGI(TAG, "Receiving DONE!");
+
+    /* Respond because needed in promise */
+    const char RESPONSE_OK[] = "{\"status\":200}\n";
+    httpd_resp_send(req, RESPONSE_OK, sizeof(RESPONSE_OK));
+    server_is_running = false;
+    return ESP_OK;
+}
+
+static const httpd_uri_t upload_bmp = {
+    .uri       = "/upload_bmp",
+    .method    = HTTP_POST,
+    .handler   = upload_bmp_post_handler,
+    .user_ctx  = NULL
+};
+
+
 static httpd_handle_t start_webserver(void)
 {
-    httpd_handle_t server = NULL;
     httpd_config_t config = HTTPD_DEFAULT_CONFIG();
     config.max_open_sockets = EXAMPLE_MAX_SOCKETS;
     config.lru_purge_enable = true;
@@ -164,7 +302,15 @@ static httpd_handle_t start_webserver(void)
     if (httpd_start(&server, &config) == ESP_OK) {
         // Set URI handlers
         ESP_LOGI(TAG, "Registering URI handlers");
-        httpd_register_uri_handler(server, &root);
+        /* Find in endpoints.h */
+        httpd_register_uri_handler(server, &upload_bmp);
+        httpd_register_uri_handler(server, &esp32c3_png);
+        httpd_register_uri_handler(server, &favicon_ico);
+        httpd_register_uri_handler(server, &gframe_icon_png);
+        httpd_register_uri_handler(server, &index_html);
+        httpd_register_uri_handler(server, &scripts_js);
+        httpd_register_uri_handler(server, &styles_css);
+
         httpd_register_err_handler(server, HTTPD_404_NOT_FOUND, http_404_error_handler);
     }
     return server;
@@ -206,12 +352,21 @@ static void gcaptive_task(void* params) {
     start_webserver();
 
     // Start the DNS server that will redirect all queries to the softAP IP
-    dns_server_config_t config = DNS_SERVER_CONFIG_SINGLE("*" /* all A queries */, "WIFI_AP_DEF" /* softAP netif ID */);
-    start_dns_server(&config);
+    // dns_server_config_t config = DNS_SERVER_CONFIG_SINGLE("*" /* all A queries */, "WIFI_AP_DEF" /* softAP netif ID */);
+    // start_dns_server(&config);
 
     while(1) {
         vTaskDelay(10);
+        if(server_is_running == false) {
+            vTaskDelay(pdMS_TO_TICKS(500));
+            break;
+        }
     }
+
+    /* Stop server */
+    ESP_LOGI(TAG, "Stopping the server...");
+    httpd_stop(server);
+    vTaskDelete(NULL);
 }
 
 
@@ -230,6 +385,7 @@ esp_err_t gcaptive_create() {
 
 esp_err_t gcaptive_start() {
     xTaskCreate(gcaptive_task, TAG, 2 * 2048, NULL, 6, NULL);
+    server_is_running = true;
     // if(gcaptive.handle == NULL) {
     //     return ESP_FAIL;
     // }
@@ -237,7 +393,7 @@ esp_err_t gcaptive_start() {
 }
 
 esp_err_t gcaptive_stop() {
-
+    server_is_running = false;
     return ESP_OK;
 }
 
@@ -267,4 +423,8 @@ bool gcaptive_has_connected_devices_changed() {
 
 void gcaptive_get_connected_devices(uint8_t* devices_count) {
     *devices_count = connected_devices_count;
+}
+
+bool gcaptive_is_running() {
+    return server_is_running;
 }

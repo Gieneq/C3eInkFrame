@@ -27,3 +27,5 @@ const char* gcaptive_get_ipv4_str();
 bool gcaptive_has_connected_devices_changed();
 
 void gcaptive_get_connected_devices(uint8_t* devices_count);
+
+bool gcaptive_is_running();

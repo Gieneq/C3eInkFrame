@@ -83,7 +83,7 @@ static void setup_sensors() {
 
 static void setup_indicators() {
     gindicator_init();
-    gindicator_set_rgb(0, 20, 0);
+    gindicator_set_rgb(0, 0, 0);
 }
 
 static void setup_gemeral() {
@@ -123,11 +123,11 @@ void app_main(void) {
     while(1) {
         if(last_ts_counter != ts_counter) {
             last_ts_counter = ts_counter;
-            gindicator_set_rgb(110, 0, 250);
+            gindicator_set_rgb(80, 10, 250);
             printf("GPIO Interrupt Triggered: %d!\n", ts_counter);
             gframe_enque_shortclick();
             vTaskDelay(pdMS_TO_TICKS(500));
-            gindicator_set_rgb(0, 20, 0);
+            gindicator_set_rgb(0, 0, 0);
         }
         vTaskDelay(pdMS_TO_TICKS(50));
     }

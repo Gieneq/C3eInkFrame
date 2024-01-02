@@ -146,6 +146,11 @@ static void gframe_process_statemachine() {
             }
         }
 
+        if (gcaptive_is_running() == false) {
+            /* For example image was uploaded - restart from PREIDLE */
+            next_sm_state = GFRAME_SM_STATE_PREIDLE;
+        }
+
         /* Poll for button event */
         if (xQueueReceive(click_event_queue, &received_click_event, 0) == pdTRUE) {
             // next_sm_state = GFRAME_SM_STATE_CAPTIVE_PORTAL_CLOSING;
