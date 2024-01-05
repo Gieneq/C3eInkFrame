@@ -56,7 +56,89 @@ static const char* gframe_sm_state_str(const gframe_sm_state_t state) {
     }
 }
 
+
+/* Temporary stuff */
 #define ALIGN_TO_32(_value) (32 * ((_value / 32) + ((_value % 32) > 0 ? 1 : 0)))
+static void draw_image_from_storage() {
+    // const char* filename = "image.bmp";
+    const char* filepath = "/data/image.bmp";
+    FILE *fd = NULL;
+    struct stat file_stat;
+    
+    const bool has_stored_image_bmp = (stat(filepath, &file_stat) == -1) ? false : true;
+    if (has_stored_image_bmp == false) {
+        epd7in5v2_draw_image(0, 0, bmp_oko_start, bmp_oko_end);
+    } 
+    else {
+        fd = fopen(filepath, "r");
+        size_t chunk_size;
+        if (fd) {
+            //file_stat.st_size
+            // chunk_size = fread(chunk_buff, 1, 8, fd); //drop
+            // for(int i = 0; i< 62; ++i) {
+            //     printf("0x%02X, ", chunk_buff[i]);
+            //     if((i == 15) || (i == 15+16) || (i == 15+32) || (i == 15+32*3) || (i == 15+32*4) || (i == 15+32*5)) {
+            //         printf("\n");
+            //     }
+            // }
+            printf("\n");
+            /* 
+                * Chunking 800 x 480
+                * 800 * 10 -> Chunk
+            */
+
+            // int chunk_idx = 0;
+            uint32_t pixel_index = 16;
+            uint32_t iy = 0;          /* From 0 to bmp_reader.image.height */
+            uint32_t ix = 0;          /* From 0 to bmp_reader.image.width  */
+
+            const uint32_t width = 800;
+            const uint32_t aligned_width = ALIGN_TO_32(width);
+            const uint32_t height = 480;
+
+            do {
+                /* Read file in chunks into the scratch buffer */
+                chunk_size = fread(chunk_buff, 1, CHUNK_BUFFER_SIZE, fd);
+                if (chunk_size > 0) {
+                    /* Has something in reader chunk */
+                    for (uint32_t chunk_byte_idx=0; chunk_byte_idx<chunk_size; ++chunk_byte_idx) {
+                        const uint32_t chunk_byte = chunk_buff[chunk_byte_idx];
+                        for (int32_t byte_idx=7; byte_idx>=0; --byte_idx) {
+
+                            iy = height - (pixel_index / aligned_width) - 1;
+                            ix = pixel_index % aligned_width;
+
+                            if (ix < width) {
+                                /* Here valid image data */
+                                const bool is_white = (chunk_byte & (1<<byte_idx)) > 0 ? true : false;
+                                epd7in5v2_set_pixel(0 + ix, 0 + iy, is_white);
+                            }
+
+                            ++pixel_index;
+                        }
+                    }
+                }
+
+                /* Keep looping till the whole file is sent */
+            } while (chunk_size != 0);
+        }
+    }
+}
+
+/* Temporary stuff */
+void draw_web_panel() {
+    const int32_t panel_x = 4;
+    const int32_t panel_y = 480 - 16 - 4;
+
+    uint8_t devices_count = 0;
+    gcaptive_get_connected_devices(&devices_count);
+
+    char text_buffer[512];
+    snprintf(text_buffer, 512, "IP:%s, AP:%s, PSSWD:%s, Devices:%u.     ", gcaptive_get_ipv4_str(), gcaptive_get_ssid(), gcaptive_get_psswd(), devices_count);
+    epd7in5v2_draw_text(panel_x, panel_y, 16, text_buffer);
+}
+
+
 static void gframe_process_statemachine() {
     gframe_sm_state_t next_sm_state = gframe_sm_state;
 
@@ -66,72 +148,7 @@ static void gframe_process_statemachine() {
         if (epd7in5v2_is_refreshed() == true) {
             if (epd7in5v2_start_draw(portMAX_DELAY) == true) {
                 epd7in5v2_fill_color(true);
-                // epd7in5v2_draw_text(300, 240, 24, "Epapierowa ramka: witam!");
-
-                const char* filename = "image.bmp";
-                const char* filepath = "/data/image.bmp";
-                FILE *fd = NULL;
-                struct stat file_stat;
-                
-                const bool has_stored_image_bmp = (stat(filepath, &file_stat) == -1) ? false : true;
-                if (has_stored_image_bmp == false) {
-                    epd7in5v2_draw_image(0, 0, bmp_oko_start, bmp_oko_end);
-                } 
-                else {
-                    fd = fopen(filepath, "r");
-                    size_t chunk_size;
-                    if (fd) {
-                        //file_stat.st_size
-                        chunk_size = fread(chunk_buff, 1, 244, fd); //drop
-                        for(int i = 0; i< 62; ++i) {
-                            printf("0x%02X, ", chunk_buff[i]);
-                            if((i == 15) || (i == 15+16) || (i == 15+32) || (i == 15+32*3) || (i == 15+32*4) || (i == 15+32*5)) {
-                                printf("\n");
-                            }
-                        }
-                        printf("\n");
-                        /* 
-                         * Chunking 800 x 480
-                         * 800 * 10 -> Chunk
-                        */
-
-                        int chunk_idx = 0;
-                        uint32_t pixel_index = 0;
-                        uint32_t iy = 0;          /* From 0 to bmp_reader.image.height */
-                        uint32_t ix = 0;          /* From 0 to bmp_reader.image.width  */
-
-                        const uint32_t width = 800;
-                        const uint32_t aligned_width = ALIGN_TO_32(width);
-                        const uint32_t height = 480;
-
-                        do {
-                            /* Read file in chunks into the scratch buffer */
-                            chunk_size = fread(chunk_buff, 1, CHUNK_BUFFER_SIZE, fd);
-                            if (chunk_size > 0) {
-                                /* Has something in reader chunk */
-                                for (uint32_t chunk_byte_idx=0; chunk_byte_idx<chunk_size; ++chunk_byte_idx) {
-                                    const uint32_t chunk_byte = chunk_buff[chunk_byte_idx];
-                                    for (int32_t byte_idx=7; byte_idx>=0; --byte_idx) {
-
-                                        iy = height - (pixel_index / aligned_width) - 1;
-                                        ix = pixel_index % aligned_width;
-
-                                        if (ix < width) {
-                                            /* Here valid image data */
-                                            const bool is_white = (chunk_byte & (1<<byte_idx)) > 0 ? true : false;
-                                            epd7in5v2_set_pixel(0 + ix, 0 + iy, is_white);
-                                        }
-
-                                        ++pixel_index;
-                                    }
-                                }
-                            }
-
-                            /* Keep looping till the whole file is sent */
-                        } while (chunk_size != 0);
-                    }
-                }
-
+                draw_image_from_storage();
                 epd7in5v2_stop_draw();
             }
             epd7in5v2_attempt_refresh(portMAX_DELAY);
@@ -164,10 +181,8 @@ static void gframe_process_statemachine() {
 
             if (epd7in5v2_start_draw(portMAX_DELAY) == true) {
                 epd7in5v2_fill_color(true);
-                epd7in5v2_draw_text(120, 120, 24, "Settings: portal");
-                epd7in5v2_draw_text(140, 120 + 30     , 16, "IP:");    epd7in5v2_draw_text(230, 120 + 30     , 16, gcaptive_get_ipv4_str());
-                epd7in5v2_draw_text(140, 120 + 30 + 20, 16, "SSID:");  epd7in5v2_draw_text(230, 120 + 30 + 20, 16, gcaptive_get_ssid());
-                epd7in5v2_draw_text(140, 120 + 30 + 40, 16, "PSSWD:"); epd7in5v2_draw_text(230, 120 + 30 + 40, 16, gcaptive_get_psswd());
+                draw_image_from_storage();
+                draw_web_panel();
                 epd7in5v2_stop_draw();
             }
             epd7in5v2_attempt_refresh(portMAX_DELAY);
@@ -184,21 +199,13 @@ static void gframe_process_statemachine() {
     else if (gframe_sm_state == GFRAME_SM_STATE_CAPTIVE_PORTAL_OPENED) {
         click_event_t received_click_event;
 
-        if (gcaptive_has_connected_devices_changed() == true) {
-            uint8_t devices_count = 0;
-            gcaptive_get_connected_devices(&devices_count);
+        if ((gcaptive_has_connected_devices_changed() == true) || (gcaptive_was_image_uploaded() == true)) {
 
-            /* Refresh display */
+            /* Refresh image with panel */
             if (epd7in5v2_start_draw(portMAX_DELAY) == true) {
                 epd7in5v2_fill_color(true);
-                epd7in5v2_draw_text(120, 120, 24, "Settings: portal");
-                epd7in5v2_draw_text(140, 120 + 30     , 16, "IP:");    epd7in5v2_draw_text(330, 120 + 30     , 16, gcaptive_get_ipv4_str());
-                epd7in5v2_draw_text(140, 120 + 30 + 20, 16, "SSID:");  epd7in5v2_draw_text(330, 120 + 30 + 20, 16, gcaptive_get_ssid());
-                epd7in5v2_draw_text(140, 120 + 30 + 40, 16, "PSSWD:"); epd7in5v2_draw_text(330, 120 + 30 + 40, 16, gcaptive_get_psswd());
-
-                char buff[16] = {0};
-                snprintf(buff, 16, "%d", devices_count);
-                epd7in5v2_draw_text(140, 120 + 30 + 60, 16, "Devices:"); epd7in5v2_draw_text(330, 120 + 30 + 60, 16, buff);
+                draw_image_from_storage();
+                draw_web_panel();
                 epd7in5v2_stop_draw();
             }
             epd7in5v2_attempt_refresh(portMAX_DELAY);

@@ -36,8 +36,8 @@
 // #include "dns_server.h"
 #include "gstorage.h"
 
-#define EXAMPLE_ESP_WIFI_SSID "GCaptiveSSID"
-#define EXAMPLE_ESP_WIFI_PASS "raspberry"
+#define EXAMPLE_ESP_WIFI_SSID "E-Paper-Frame"
+#define EXAMPLE_ESP_WIFI_PASS "guanabana"
 #define EXAMPLE_MAX_STA_CONN 2
 #define EXAMPLE_MAX_SOCKETS  3
 
@@ -78,9 +78,10 @@ static struct {
 static connected_device_data_t connected_devices_data[EXAMPLE_MAX_STA_CONN];
 static uint8_t connected_devices_count = 0;
 
-static const char *TAG = "example";
+static const char *TAG = "APportal";
 
 static bool connected_devices_has_changed = false;
+static bool image_was_uploaded = false;
 
 static void wifi_event_handler(void *arg, esp_event_base_t event_base,
                                int32_t event_id, void *event_data)
@@ -355,7 +356,7 @@ static esp_err_t upload_bmp_post_handler(httpd_req_t *req) {
     /* Respond because needed in promise */
     const char RESPONSE_OK[] = "{\"status\":200}\n";
     httpd_resp_send(req, RESPONSE_OK, sizeof(RESPONSE_OK));
-    server_is_running = false;
+    image_was_uploaded = true;
     return ESP_OK;
 }
 
@@ -365,6 +366,11 @@ static const httpd_uri_t upload_bmp = {
     .handler   = upload_bmp_post_handler,
     .user_ctx  = NULL
 };
+
+// static asdasd() {
+    
+//     server_is_running = false;
+// }
 
 static httpd_handle_t start_webserver(void)
 {
@@ -491,6 +497,14 @@ const char* gcaptive_get_ipv4_str() {
 bool gcaptive_has_connected_devices_changed() {
     if (connected_devices_has_changed == true) {
         connected_devices_has_changed = false; // mark
+        return true;
+    }
+    return false;
+}
+
+bool gcaptive_was_image_uploaded()  {
+    if (image_was_uploaded == true) {
+        image_was_uploaded = false; // mark
         return true;
     }
     return false;
