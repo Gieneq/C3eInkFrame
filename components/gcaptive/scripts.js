@@ -8,6 +8,7 @@ let preview_enable = true;
 
 const preview_canvas = document.getElementById('preview_canvas');
 preview_ctx = preview_canvas.getContext('2d');
+preview_ctx.willReadFrequently = true;
 
 const scale_slider = document.getElementById('scale_slider');
 const scale_value = document.getElementById('scale_value');
@@ -204,6 +205,7 @@ function download() {
   saveCanvasAsImage(preview_canvas, 'dithered_image.png');
 }
 
+// Mouse events
 preview_canvas.addEventListener('mousedown', function(event) {
   dragging.is_dragging = true;
   dragging.start_x = event.clientX - preview_canvas.offsetLeft;
@@ -232,13 +234,49 @@ preview_canvas.addEventListener('mouseup', function() {
   dragging.is_dragging = false;
 });
 
-// preview_canvas.addEventListener('mouseover', function() {
-//   toggle_preview_btn.style.opacity = 1;
-// });
+// Touch events
+preview_canvas.addEventListener('touchstart', function(event) {
+  dragging.is_dragging = true;
+  if (event.type === 'mousedown') {
+    dragging.start_x = event.clientX - preview_canvas.offsetLeft;
+    dragging.start_y = event.clientY - preview_canvas.offsetTop;
+  } else if (event.type === 'touchstart') {
+    dragging.start_x = event.touches[0].clientX - preview_canvas.offsetLeft;
+    dragging.start_y = event.touches[0].clientY - preview_canvas.offsetTop;
+  }
+  event.preventDefault(); // Prevent default behavior
+});
 
-// preview_canvas.addEventListener('mouseout', function() {
-//   toggle_preview_btn.style.opacity = 0;
-// });
+preview_canvas.addEventListener('touchmove', function(event) {
+  if (dragging.is_dragging) {
+    let x, y;
+    if (event.type === 'mousemove') {
+      x = event.clientX - preview_canvas.offsetLeft;
+      y = event.clientY - preview_canvas.offsetTop;
+    } else if (event.type === 'touchmove') {
+      x = event.touches[0].clientX - preview_canvas.offsetLeft;
+      y = event.touches[0].clientY - preview_canvas.offsetTop;
+    }
+    
+    const deltaX = x - dragging.start_x;
+    const deltaY = y - dragging.start_y;
+    
+    dragging.start_x = x;
+    dragging.start_y = y;
+
+    translation.x -= deltaX / scale;
+    translation.y -= deltaY / scale;
+
+    if (deltaX !== 0 && deltaY !== 0) {
+      show_preview();
+    }
+    event.preventDefault(); // Prevent default behavior
+  }
+});
+
+preview_canvas.addEventListener('touchend', function() {
+  dragging.is_dragging = false;
+});
 
 layout_rotate_btn.addEventListener('click', function() {
 
