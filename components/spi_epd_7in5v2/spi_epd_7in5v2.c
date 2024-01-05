@@ -637,6 +637,37 @@ void epd7in5v2_fill_rect(const int32_t x, const int32_t y, const uint32_t width,
     }
 }
 
+
+// void epd7in5v2_draw_image_stream(const int32_t x, const int32_t y, const char* chunk, const int chunk_size, const int width, const int height) {
+//     /* Draw monochrome image 32bit aligned */
+ 
+//     uint32_t pixel_index = 0;
+//     uint32_t iy = 0;          /* From 0 to bmp_reader.image.height */
+//     uint32_t ix = 0;          /* From 0 to bmp_reader.image.width  */
+
+//     while (bmp_loader_read_if_any(&bmp_reader) == true) {
+//         /* Has something in reader chunk */
+//         for (uint32_t chunk_byte_idx=0; chunk_byte_idx<chunk_size; ++chunk_byte_idx) {
+//             const uint32_t chunk_byte = chunk[chunk_byte_idx];
+//             for (int32_t byte_idx=7; byte_idx>=0; --byte_idx) {
+
+//                 iy = bmp_reader.image.height - (pixel_index / bmp_reader.image.aligned_width) - 1;
+//                 ix = pixel_index % bmp_reader.image.aligned_width;
+
+//                 if (ix < bmp_reader.image.width) {
+//                     /* Here valid image data */
+//                     const bool is_white = (chunk_byte & (1<<byte_idx)) > 0 ? true : false;
+//                     epd7in5v2_set_pixel(x + ix, y + iy, is_white);
+//                 }
+
+//                 ++pixel_index;
+//             }
+//         }
+//         // ESP_LOGW(TAG, "Not implemented - got some iamge data [%u] at %lu", bmp_reader.chunk_size, bmp_reader.recent_offset);
+//     }
+//     ESP_LOGI(TAG, ">> Drawing image [%lux%lu] OK! Data size=%lu", bmp_reader.image.width, bmp_reader.image.height, bmp_reader.image.data_size);
+// }
+
 void epd7in5v2_draw_image(const int32_t x, const int32_t y, const char* image_binary_start, const char* image_binary_end) {
     /* Draw monochrome image 32bit aligned */
     if ((image_binary_start == NULL) || (image_binary_end == NULL)) {

@@ -295,6 +295,8 @@ static esp_err_t upload_bmp_post_handler(httpd_req_t *req) {
      * the size of the file being uploaded */
     remaining = req->content_len;
 
+    bool first = true;
+
     while (remaining > 0) {
 
         ESP_LOGI(TAG, "Remaining size : %d", remaining);
@@ -314,6 +316,18 @@ static esp_err_t upload_bmp_post_handler(httpd_req_t *req) {
             /* Respond with 500 Internal Server Error */
             httpd_resp_send_err(req, HTTPD_500_INTERNAL_SERVER_ERROR, "Failed to receive file");
             return ESP_FAIL;
+        }
+
+        if (first == true) {
+            first = false;
+
+            for(int i = 0; i< 62; ++i) {
+                printf("0x%02X, ", upload_bmp_buff[i]);
+                if((i == 15) || (i == 15+16) || (i == 15+32) || (i == 15+32*3) || (i == 15+32*4) || (i == 15+32*5)) {
+                    printf("\n");
+                }
+            }
+            printf("\n");
         }
 
         /* Write buffer content to file on storage */

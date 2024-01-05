@@ -25,35 +25,26 @@
 
 #define TOUCH_SENS_PIN GPIO_NUM_20
 
+#define STHC3_SENSOR_REFRESH_INTERVAL       5000
+#define MAIN_TASK_LOOPING_DELAY_MS          10
+#define LED_TOUCH_VISUALIZATION_DELAY_MS    500
 static const char* TAG = "Main";
 
 static volatile int ts_counter = 0;
 
 void IRAM_ATTR gpio_isr_handler(void* arg) {
-    // This function will be called on the rising edge interrupt
+    /* This function will be called 
+    * on the rising edge interrupt 
+    */ 
     ++ts_counter;
 }
 
 
 /* Setup */
-
 static void setup_epb() {
     ESP_ERROR_CHECK(epd7in5v2_create());
     ESP_ERROR_CHECK(epd7in5v2_start());
-
-    if(epd7in5v2_start_draw(portMAX_DELAY)) {
-        epd7in5v2_fill_color(true);
-
-        epd7in5v2_set_rotation(2);
-
-        for(int i =0; i< 20; ++i) {
-            epd7in5v2_fill_rect(i*5, i*10, 10 + i*10, i, false);
-        }
-
-        // epd7in5v2_draw_text(200, 100, 24, "Kicia krawcowa <3");
-        epd7in5v2_stop_draw();
-    }
-    epd7in5v2_attempt_refresh(portMAX_DELAY);
+    epd7in5v2_set_rotation(2);
 }
 
 static void setup_ts() {
@@ -71,14 +62,14 @@ static void setup_ts() {
 }
 
 static void setup_sensors() {
-    // esp_err_t ret = shtc3_init();
-    // ESP_ERROR_CHECK(ret);
+    esp_err_t ret = shtc3_init();
+    ESP_ERROR_CHECK(ret);
 
-    // shtc3_soft_reset();
+    shtc3_soft_reset();
 
-    // uint16_t sesns_id = shtc3_read_id();
+    uint16_t sesns_id = shtc3_read_id();
 
-    // ESP_LOGI(TAG, "Got ID: 0x%04X", sesns_id);
+    ESP_LOGI(TAG, "Got ID: 0x%04X", sesns_id);
 
 }
 
@@ -102,12 +93,12 @@ static void setup_gframe() {
 /* Refresh */
 
 static void refresh_sensors() {
-    // shtc3_refresh();
+    shtc3_refresh();
 
-    // const float temperature = shtc3_get_temperature();
-    // const float humidity = shtc3_get_humidity();
+    const float temperature = shtc3_get_temperature();
+    const float humidity = shtc3_get_humidity();
 
-    // ESP_LOGI(TAG, "Temperature is %.2f*C, humidity is: %.2f%%", temperature, humidity);
+    ESP_LOGI(TAG, "Temperature is %.2f*C, humidity is: %.2f%%", temperature, humidity);
 }
 
 void app_main(void) {
@@ -121,16 +112,24 @@ void app_main(void) {
     refresh_sensors();
     int last_ts_counter = ts_counter;
 
+    int sensor_refresh_counter = 0;
+
     ESP_LOGI(TAG, "Start loop!");
     while(1) {
         if(last_ts_counter != ts_counter) {
             last_ts_counter = ts_counter;
-            gindicator_set_rgb(80, 10, 250);
+            gindicator_set_rgb(0, 45, 140);
             printf("GPIO Interrupt Triggered: %d!\n", ts_counter);
             gframe_enque_shortclick();
-            vTaskDelay(pdMS_TO_TICKS(500));
+            vTaskDelay(pdMS_TO_TICKS(LED_TOUCH_VISUALIZATION_DELAY_MS));
             gindicator_set_rgb(0, 0, 0);
         }
-        vTaskDelay(pdMS_TO_TICKS(50));
+
+        vTaskDelay(pdMS_TO_TICKS(MAIN_TASK_LOOPING_DELAY_MS));
+        sensor_refresh_counter += MAIN_TASK_LOOPING_DELAY_MS;
+        if(sensor_refresh_counter > STHC3_SENSOR_REFRESH_INTERVAL) {
+            sensor_refresh_counter -= STHC3_SENSOR_REFRESH_INTERVAL;
+            refresh_sensors();
+        }
     }
 }

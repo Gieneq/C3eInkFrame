@@ -362,7 +362,9 @@ function upload() {
   } else {
     const full_url = `${base_url}${upload_endpoint}`;
     console.log("Upload mode of", bmp_file_data.length, "B to", full_url);
-    sendToEndpoint(bmp_data, full_url);
+    
+  // console.log(header);
+    sendToEndpoint(bmp_file_data, full_url);
   }
 }
 
