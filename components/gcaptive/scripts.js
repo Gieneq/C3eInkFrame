@@ -223,6 +223,8 @@ preview_canvas.addEventListener('mousemove', function(event) {
 
       translation.x -= deltaX / scale;
       translation.y -= deltaY / scale;
+
+      preview_enable = false;
       
       if (deltaX != 0 && deltaY != 0) {
         show_preview();
@@ -232,6 +234,8 @@ preview_canvas.addEventListener('mousemove', function(event) {
 
 preview_canvas.addEventListener('mouseup', function() {
   dragging.is_dragging = false;
+  preview_enable = true;
+  show_preview();
 });
 
 // Touch events
@@ -266,6 +270,8 @@ preview_canvas.addEventListener('touchmove', function(event) {
 
     translation.x -= deltaX / scale;
     translation.y -= deltaY / scale;
+    
+    preview_enable = false;
 
     if (deltaX !== 0 && deltaY !== 0) {
       show_preview();
@@ -276,6 +282,8 @@ preview_canvas.addEventListener('touchmove', function(event) {
 
 preview_canvas.addEventListener('touchend', function() {
   dragging.is_dragging = false;
+  preview_enable = true;
+  show_preview();
 });
 
 layout_rotate_btn.addEventListener('click', function() {
