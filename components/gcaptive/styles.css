@@ -461,4 +461,8 @@ canvas:hover {
         margin-bottom: 16px;
         padding: 20px;
     }
+
+    .w3-margin-left {
+        margin-left:0px!important
+    }
 }
