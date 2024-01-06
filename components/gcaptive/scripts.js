@@ -82,9 +82,9 @@ function mapValue(value, inputMin, inputMax, outputMin, outputMax) {
 
 scale_slider.addEventListener('input', function() {
   if (scale_slider.value < 50) {
-    scale = mapValue(scale_slider.value, 0, 50, 0.2, 1);
+    scale = mapValue(scale_slider.value, 0, 50, 0.05, 1);
   } else {
-    scale = mapValue(scale_slider.value, 50, 100, 1, 4);
+    scale = mapValue(scale_slider.value, 50, 100, 1, 2.2);
   }
   scale_value.textContent = scale.toFixed(2);
   show_preview();
@@ -92,9 +92,9 @@ scale_slider.addEventListener('input', function() {
 
 gamma_slider.addEventListener('input', function() {
   if (gamma_slider.value < 50) {
-    gamma = mapValue(gamma_slider.value, 0, 50, 0.5, 1);
+    gamma = mapValue(gamma_slider.value, 0, 50, 0.85, 1);
   } else {
-    gamma = mapValue(gamma_slider.value, 50, 100, 1, 2);
+    gamma = mapValue(gamma_slider.value, 50, 100, 1, 1.15);
   }
   gamma_value.textContent = gamma.toFixed(2);
   show_preview();
