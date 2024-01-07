@@ -1,53 +1,63 @@
-| Supported Targets | ESP32 | ESP32-C2 | ESP32-C3 | ESP32-C6 | ESP32-H2 | ESP32-S2 | ESP32-S3 |
-| ----------------- | ----- | -------- | -------- | -------- | -------- | -------- | -------- |
+# E-Paper Frame 🖥️
 
-# Hello World Example
+Frame to show now to frequently changing information. Now it is used to serve AP with web server for responsive web page. The web page is combined HTML, CSS, JS and images and is used to crop, scale, process and upload image to the frame.
 
-Starts a FreeRTOS task to print "Hello World".
+## Plans ✔️
 
-(See the README.md file in the upper level 'examples' directory for more information about examples.)
+Todo:
+- [ ] Add calendar
+- [ ] Add weather info
+- [ ] Use already included IMU sensor to rotate screen.
 
-## How to use example
+## BOM 🛠️
 
-Follow detailed instructions provided specifically for this example.
+The frame is built around [ESP32 Rustboard](https://github.com/esp-rs/esp-rust-board) (and yea, written in C). The Rustboard has:
+- ESP32-C3,
+- Lipol charger circuit, 
+- USB C, 
+- SHTC3 temperature/humidity sensor,
+- ICM-42670-P IMU
 
-Select the instructions depending on Espressif chip installed on your development board:
+Despite that:
+- LiPol battery,
+- Waveshare 7.5' monochrome E-ink display,
+- Touch button,
+- WS2812B LED.
 
-- [ESP32 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/stable/get-started/index.html)
-- [ESP32-S2 Getting Started Guide](https://docs.espressif.com/projects/esp-idf/en/latest/esp32s2/get-started/index.html)
+## Development 📲
 
+Inside - it is hobby project, made out of easly forming pieces of wooden strip, plywood and MDF board.
 
-## Example folder contents
+<p align="center">
+  <img width="500" alt="ESP32 frame inside" src="img/frame_inside.jpg">
+</p>
 
-The project **hello_world** contains one source file in C language [hello_world_main.c](main/hello_world_main.c). The file is located in folder [main](main).
+During development only USB-C connection is needed. Code is written in VS Code with official ESP32 plugin. BTW the plugin is awesome! ⭐
 
-ESP-IDF projects are built using CMake. The project build configuration is contained in `CMakeLists.txt` files that provide set of directives and instructions describing the project's source files and targets (executable, library, or both).
+<p align="center">
+  <img width="500" alt="ESP32 frame outside" src="img/frame_outside_office.jpg">
+</p>
 
-Below is short explanation of remaining files in the project folder.
+Credentials are needed to connect to the frame and control using web portal.
 
-```
-├── CMakeLists.txt
-├── pytest_hello_world.py      Python script used for automated testing
-├── main
-│   ├── CMakeLists.txt
-│   └── hello_world_main.c
-└── README.md                  This is the file you are currently reading
-```
+<p align="center">
+  <img width="500" alt="ESP32 frame outside" src="img/frame_outside.jpg">
+</p>
 
-For more information on structure and contents of ESP-IDF projects, please refer to Section [Build System](https://docs.espressif.com/projects/esp-idf/en/latest/esp32/api-guides/build-system.html) of the ESP-IDF Programming Guide.
+The web page is made using CSS responsive style from [W3Schols](https://www.w3schools.com/) examples. JS is mostly image processing with Floyd–Steinberg Dithering Algorithm and some color manipulation.
 
-## Troubleshooting
+<p align="center">
+  <img width="500" alt="Web page to dither images and upload" src="img/eink_frame_web_page.png">
+</p>
 
-* Program upload failure
+Finally input is converted to BMP monochrome file and sent to POST endpoint. During dev the BMP file is downloaded, for example the first image which then was sent to the frame:
 
-    * Hardware connection is not correct: run `idf.py -p PORT monitor`, and reboot your board to see if there are any output logs.
-    * The baud rate for downloading is too high: lower your baud rate in the `menuconfig` menu, and try again.
+<p align="center">
+  <img width="500" alt="Converted image" src="img/first_sent_image.png">
+</p>
 
-## Technical support and feedback
+## Schematic
 
-Please use the following feedback channels:
+TBH it is very simple. Just connect SPI, button, and use I2C devices.
 
-* For technical queries, go to the [esp32.com](https://esp32.com/) forum
-* For a feature request or bug report, create a [GitHub issue](https://github.com/espressif/esp-idf/issues)
-
-We will get back to you as soon as possible.
+Recentrly battery monitor was added to GPIO0. It is actually 2x 100k voltage divider with capacitor at output to help ADC measurements.
