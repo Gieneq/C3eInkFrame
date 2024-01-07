@@ -2,12 +2,11 @@
 
 Frame to show now to frequently changing information. Now it is used to serve AP with web server for responsive web page. The web page is combined HTML, CSS, JS and images and is used to crop, scale, process and upload image to the frame.
 
-## Plans ✔️
+Watch this ▶️ [YT Short](https://youtube.com/shorts/pKEM7Uka-vU?si=n88JxDTBIQ4Fu2NL) 🔥 to see how it works.
 
-Todo:
-- [ ] Add calendar
-- [ ] Add weather info
-- [ ] Use already included IMU sensor to rotate screen.
+<p align="center">
+  <img width="500" alt="ESP32 frame outside" src="img/frame_outside.jpg">
+</p>
 
 ## BOM 🛠️
 
@@ -40,10 +39,6 @@ During development only USB-C connection is needed. Code is written in VS Code w
 
 Credentials are needed to connect to the frame and control using web portal.
 
-<p align="center">
-  <img width="500" alt="ESP32 frame outside" src="img/frame_outside.jpg">
-</p>
-
 The web page is made using CSS responsive style from [W3Schols](https://www.w3schools.com/) examples. JS is mostly image processing with Floyd–Steinberg Dithering Algorithm and some color manipulation.
 
 <p align="center">
@@ -56,8 +51,15 @@ Finally input is converted to BMP monochrome file and sent to POST endpoint. Dur
   <img width="500" alt="Converted image" src="img/first_sent_image.png">
 </p>
 
-## Schematic
+## Schematic 📋
 
 TBH it is very simple. Just connect SPI, button, and use I2C devices.
 
 Recentrly battery monitor was added to GPIO0. It is actually 2x 100k voltage divider with capacitor at output to help ADC measurements.
+
+## Plans ✔️
+
+Todo:
+- [ ] Add calendar
+- [ ] Add weather info
+- [ ] Use already included IMU sensor to rotate screen.
